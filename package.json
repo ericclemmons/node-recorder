@@ -1,0 +1,17 @@
+{
+  "devDependencies": {
+    "@types/express-graphql": "^0.6.2",
+    "@types/graphql": "^14.0.7",
+    "@types/node-fetch": "^2.1.6",
+    "express-graphql": "^0.7.1",
+    "node-fetch": "^2.3.0",
+    "polydev": "^1.2.0",
+    "reflect-metadata": "^0.1.13",
+    "ts-node": "^8.0.2",
+    "typegql": "^0.6.1",
+    "typescript": "^3.3.3333"
+  },
+  "scripts": {
+    "dev": "polydev --require ts-node/register"
+  }
+}
