@@ -1,4 +1,6 @@
 {
+  "name": "back-to-the-fixture",
+  "version": "0.0.0",
   "devDependencies": {
     "@types/express-graphql": "^0.6.2",
     "@types/globby": "^8.0.0",
