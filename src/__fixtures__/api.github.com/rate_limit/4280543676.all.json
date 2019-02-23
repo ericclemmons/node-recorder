@@ -1,0 +1,36 @@
+{
+  "scope": "https://api.github.com:443",
+  "method": "GET",
+  "path": "/rate_limit",
+  "body": "",
+  "status": 200,
+  "response": {
+    "resources": {
+      "core": {
+        "limit": 60,
+        "remaining": 60,
+        "reset": 1550911061
+      },
+      "search": {
+        "limit": 10,
+        "remaining": 10,
+        "reset": 1550907521
+      },
+      "graphql": {
+        "limit": 0,
+        "remaining": 0,
+        "reset": 1550911061
+      },
+      "integration_manifest": {
+        "limit": 5000,
+        "remaining": 5000,
+        "reset": 1550911061
+      }
+    },
+    "rate": {
+      "limit": 60,
+      "remaining": 60,
+      "reset": 1550911061
+    }
+  }
+}
