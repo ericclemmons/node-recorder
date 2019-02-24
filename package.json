@@ -15,6 +15,7 @@
     "express-graphql": "^0.7.1",
     "jest": "^24.1.0",
     "node-fetch": "^2.3.0",
+    "np": "^4.0.2",
     "polydev": "^1.2.0",
     "reflect-metadata": "^0.1.13",
     "ts-jest": "^24.0.0",
@@ -26,6 +27,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "dev": "polydev -r ts-node/register -r tsconfig-paths/register",
+    "release": "np",
     "test": "jest"
   },
   "dependencies": {
