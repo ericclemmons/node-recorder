@@ -1,6 +1,7 @@
 {
   "name": "back-to-the-fixture",
   "version": "0.0.0",
+  "main": "./dist",
   "devDependencies": {
     "@types/express-graphql": "^0.6.2",
     "@types/globby": "^8.0.0",
@@ -15,11 +16,13 @@
     "polydev": "^1.2.0",
     "reflect-metadata": "^0.1.13",
     "ts-node": "^8.0.2",
+    "tsconfig-paths": "^3.8.0",
     "typegql": "^0.6.1",
     "typescript": "^3.3.3333"
   },
   "scripts": {
-    "dev": "polydev --require ts-node/register"
+    "build": "tsc --build tsconfig.build.json",
+    "dev": "polydev -r ts-node/register -r tsconfig-paths/register"
   },
   "dependencies": {
     "@sindresorhus/fnv1a": "^1.0.0",
