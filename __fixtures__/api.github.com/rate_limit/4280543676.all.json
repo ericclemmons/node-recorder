@@ -9,28 +9,28 @@
       "core": {
         "limit": 60,
         "remaining": 60,
-        "reset": 1550911061
+        "reset": 1550985382
       },
       "search": {
         "limit": 10,
         "remaining": 10,
-        "reset": 1550907521
+        "reset": 1550981842
       },
       "graphql": {
         "limit": 0,
         "remaining": 0,
-        "reset": 1550911061
+        "reset": 1550985382
       },
       "integration_manifest": {
         "limit": 5000,
         "remaining": 5000,
-        "reset": 1550911061
+        "reset": 1550985382
       }
     },
     "rate": {
       "limit": 60,
       "remaining": 60,
-      "reset": 1550911061
+      "reset": 1550985382
     }
   }
 }

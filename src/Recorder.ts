@@ -19,7 +19,7 @@ interface Options {
 
 export class Recorder {
   mode = Mode.LIVE;
-  fixturesPath = path.join(__dirname, "__fixtures__");
+  fixturesPath = path.join(process.cwd(), "__fixtures__");
   user = "all";
 
   constructor(options: Options) {
