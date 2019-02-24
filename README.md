@@ -8,6 +8,7 @@ Given a GraphQL server:
 
 ```js
 import { Recorder } from "back-to-the-fixture";
+import graphql from "express-graphql";
 
 export default graphql((req: Request, res: Response) => {
   // 👇 Pull ?mode=record or ?mode=replay
