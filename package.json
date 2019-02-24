@@ -1,6 +1,9 @@
 {
   "name": "back-to-the-fixture",
   "version": "1.0.1",
+  "repository": "git@github.com:ericclemmons/back-to-the-fixture.git",
+  "author": "Eric Clemmons <eric@smarterspam.com>",
+  "license": "MIT",
   "files": [
     "dist"
   ],
