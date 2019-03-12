@@ -11,13 +11,23 @@ const fnv1a = require("@sindresorhus/fnv1a");
 
 import { Mode } from "./Mode";
 
+interface Filter {
+  (
+    call: nock.ReplyCallbackResult,
+    index: number,
+    calls: nock.ReplyCallbackResult[]
+  ): boolean;
+}
+
 interface Options {
+  filter?: Filter;
   mode: Mode;
   fixturesPath?: string;
   user?: string;
 }
 
 export class Recorder {
+  filter = (call: nock.ReplyCallbackResult) => true;
   mode = Mode.LIVE;
   fixturesPath = path.join(process.cwd(), "__fixtures__");
   user = "all";
@@ -105,12 +115,12 @@ export class Recorder {
 
     recordings
       .map(pathname => path.join(this.fixturesPath, pathname))
-      .forEach(file => {
-        const def = JSON.parse(fs.readFileSync(file, "utf8"));
-
-        nock(def.scope)
-          .intercept(def.path, def.method, def.body)
-          .reply(def.status, def.response)
+      .map(file => JSON.parse(fs.readFileSync(file, "utf8")))
+      .filter(this.filter)
+      .forEach(call => {
+        nock(call.scope)
+          .intercept(call.path, call.method, call.body)
+          .reply(call.status, call.response)
           .persist();
       });
   }
@@ -132,7 +142,7 @@ export class Recorder {
 
         calls
           // TODO Find a way of allowing a cusotm filter here
-          //.filter(call => call.scope.includes('whatever);
+          .filter(this.filter)
           .forEach(call => {
             const contentEncoding =
               call.rawHeaders[call.rawHeaders.indexOf("Content-Encoding") + 1];

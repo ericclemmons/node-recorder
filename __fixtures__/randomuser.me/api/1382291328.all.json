@@ -1,0 +1,69 @@
+{
+  "scope": "https://randomuser.me:443",
+  "method": "GET",
+  "path": "/api",
+  "body": "",
+  "status": 200,
+  "response": {
+    "results": [
+      {
+        "gender": "female",
+        "name": {
+          "title": "miss",
+          "first": "lea",
+          "last": "thomsen"
+        },
+        "location": {
+          "street": "990 åparken",
+          "city": "stoevring",
+          "state": "sjælland",
+          "postcode": 50261,
+          "coordinates": {
+            "latitude": "-36.5425",
+            "longitude": "148.1752"
+          },
+          "timezone": {
+            "offset": "+5:00",
+            "description": "Ekaterinburg, Islamabad, Karachi, Tashkent"
+          }
+        },
+        "email": "lea.thomsen@example.com",
+        "login": {
+          "uuid": "8f3b1fcc-77fc-4b0e-9e01-e1969c050115",
+          "username": "bigtiger175",
+          "password": "44444444",
+          "salt": "D7YRa3Y5",
+          "md5": "5f11f443378078f64029eb9ae43dcf46",
+          "sha1": "d3ec173c140e4379ccc328fe3cd0ec684d96de7a",
+          "sha256": "b3e7fb9ca59f29f44424d523f15527aa838c0159efaa4774a5c1c1be35c910a0"
+        },
+        "dob": {
+          "date": "1976-06-08T10:49:27Z",
+          "age": 42
+        },
+        "registered": {
+          "date": "2009-02-28T13:32:43Z",
+          "age": 10
+        },
+        "phone": "70301131",
+        "cell": "43051209",
+        "id": {
+          "name": "CPR",
+          "value": "007784-4717"
+        },
+        "picture": {
+          "large": "https://randomuser.me/api/portraits/women/56.jpg",
+          "medium": "https://randomuser.me/api/portraits/med/women/56.jpg",
+          "thumbnail": "https://randomuser.me/api/portraits/thumb/women/56.jpg"
+        },
+        "nat": "DK"
+      }
+    ],
+    "info": {
+      "seed": "f3d4dc6bb9d9d261",
+      "results": 1,
+      "page": 1,
+      "version": "1.2"
+    }
+  }
+}
