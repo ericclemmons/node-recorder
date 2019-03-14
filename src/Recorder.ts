@@ -32,8 +32,10 @@ export class Recorder {
   fixturesPath = path.join(process.cwd(), "__fixtures__");
   user = "all";
 
-  constructor(options: Options) {
-    Object.assign(this, options);
+  constructor(options?: Options) {
+    if (options) {
+      this.configure(options);
+    }
 
     nock.restore();
     nock.cleanAll();
@@ -41,6 +43,10 @@ export class Recorder {
     if (!nock.isActive()) {
       nock.activate();
     }
+  }
+
+  configure(options: Options) {
+    Object.assign(this, options);
 
     switch (this.mode) {
       case undefined:
@@ -56,6 +62,8 @@ export class Recorder {
       default:
         throw new Error(`Unknown "mode": ${this.mode}`);
     }
+
+    return this;
   }
 
   getFixturePath(call: nock.NockDefinition, username = "all") {
