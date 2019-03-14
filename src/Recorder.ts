@@ -21,7 +21,7 @@ interface Filter {
 
 interface Options {
   filter?: Filter;
-  mode: Mode;
+  mode?: Mode;
   fixturesPath?: string;
   user?: string;
 }
