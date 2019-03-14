@@ -1,2 +1,5 @@
+export { Call } from "./Call";
 export { Mode } from "./Mode";
-export { Recorder } from "./Recorder";
+import { Recorder } from "./Recorder";
+
+export const recorder = new Recorder();

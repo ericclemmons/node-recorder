@@ -7,16 +7,14 @@ import * as path from "path";
 import * as url from "url";
 import * as zlib from "zlib";
 
+import { Call } from "./Call";
+
 const fnv1a = require("@sindresorhus/fnv1a");
 
 import { Mode } from "./Mode";
 
 interface Filter {
-  (
-    call: nock.ReplyCallbackResult,
-    index: number,
-    calls: nock.ReplyCallbackResult[]
-  ): boolean;
+  (call: Call, index: number, calls: Call[]): boolean;
 }
 
 interface Options {
@@ -26,11 +24,18 @@ interface Options {
   user?: string;
 }
 
+export const DefaultOptions = {
+  filter: (call: Call) => true,
+  mode: Mode.LIVE,
+  fixturesPath: path.join(process.cwd(), "__fixtures__"),
+  user: "all"
+};
+
 export class Recorder {
-  filter = (call: nock.ReplyCallbackResult) => true;
-  mode = Mode.LIVE;
-  fixturesPath = path.join(process.cwd(), "__fixtures__");
-  user = "all";
+  filter = DefaultOptions.filter;
+  mode = DefaultOptions.mode;
+  fixturesPath = DefaultOptions.fixturesPath;
+  user = DefaultOptions.user;
 
   constructor(options?: Options) {
     if (options) {
@@ -46,7 +51,7 @@ export class Recorder {
   }
 
   configure(options: Options) {
-    Object.assign(this, options);
+    Object.assign(this, DefaultOptions, options);
 
     switch (this.mode) {
       case undefined:
@@ -66,7 +71,7 @@ export class Recorder {
     return this;
   }
 
-  getFixturePath(call: nock.NockDefinition, username = "all") {
+  getFixturePath(call: Call, username = "all") {
     const { hostname } = url.parse(call.scope);
     const { pathname } = url.parse(call.path);
 
@@ -125,7 +130,7 @@ export class Recorder {
       .map(pathname => path.join(this.fixturesPath, pathname))
       .map(file => JSON.parse(fs.readFileSync(file, "utf8")))
       .filter(this.filter)
-      .forEach(call => {
+      .forEach((call: Call) => {
         nock(call.scope)
           .intercept(call.path, call.method, call.body)
           .reply(call.status, call.response)
@@ -145,13 +150,13 @@ export class Recorder {
       dont_print: false,
       logging: () => {
         // nock uses a singleton for recording, so we have to clear the stack to prevent race-conditions
-        const calls: nock.ReplyCallbackResult[] = nock.recorder.play() as any;
+        const calls: Call[] = nock.recorder.play() as any;
         nock.recorder.clear();
 
         calls
           // TODO Find a way of allowing a cusotm filter here
           .filter(this.filter)
-          .forEach(call => {
+          .forEach((call: Call) => {
             const contentEncoding =
               call.rawHeaders[call.rawHeaders.indexOf("Content-Encoding") + 1];
 

@@ -1,4 +1,4 @@
-import { Mode, Recorder } from "back-to-the-fixture";
+import { Call, Mode, recorder } from "back-to-the-fixture";
 import { readFileSync } from "fs";
 import fetch from "node-fetch";
 
@@ -14,9 +14,11 @@ describe("Recorder", () => {
   describe("record", () => {
     describe("with filter", () => {
       it("should not record fixture", async () => {
-        const recorder = new Recorder({
-          // Don't replay randomuser APIs
-          filter: call => !call.scope.startsWith("https://randomuser.me"),
+        recorder.configure({
+          filter(call: Call) {
+            // Don't replay randomuser APIs
+            return !call.scope.startsWith("https://randomuser.me");
+          },
           mode: Mode.RECORD
         });
 
@@ -38,7 +40,8 @@ describe("Recorder", () => {
 
   describe("replay", () => {
     it("should return fixture", async () => {
-      const recorder = new Recorder({ mode: Mode.REPLAY });
+      recorder.configure({ mode: Mode.REPLAY });
+
       const res = await fetch("https://randomuser.me/api");
       const json = await res.json();
       const fixture = JSON.parse(
@@ -50,9 +53,11 @@ describe("Recorder", () => {
 
     describe("with filter", () => {
       it("should not return fixture", async () => {
-        const recorder = new Recorder({
-          // Don't replay randomuser APIs
-          filter: call => !call.scope.startsWith("https://randomuser.me"),
+        recorder.configure({
+          filter(call: Call) {
+            // Don't replay randomuser APIs
+            return !call.scope.startsWith("https://randomuser.me");
+          },
           mode: Mode.REPLAY
         });
 
