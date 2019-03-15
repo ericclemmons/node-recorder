@@ -131,9 +131,11 @@ export class Recorder {
       .map(file => JSON.parse(fs.readFileSync(file, "utf8")))
       .filter(this.filter)
       .forEach((call: Call) => {
-        nock(call.scope)
-          .intercept(call.path, call.method, call.body)
-          .reply(call.status, call.response)
+        const { reqheaders } = call;
+
+        nock(call.scope, { reqheaders })
+          .intercept(call.path, call.method as string, call.body)
+          .reply(call.status as number, call.response)
           .persist();
       });
   }
@@ -148,15 +150,15 @@ export class Recorder {
     nock.recorder.rec({
       // Need this to trigger our logger
       dont_print: false,
-      logging: () => {
+      enable_reqheaders_recording: true,
+      logging: args => {
         // nock uses a singleton for recording, so we have to clear the stack to prevent race-conditions
         const calls: Call[] = nock.recorder.play() as any;
+
         nock.recorder.clear();
 
         calls
-          // TODO Find a way of allowing a cusotm filter here
-          .filter(this.filter)
-          .forEach((call: Call) => {
+          .map((call: Call) => {
             const contentEncoding =
               call.rawHeaders[call.rawHeaders.indexOf("Content-Encoding") + 1];
 
@@ -171,9 +173,39 @@ export class Recorder {
               const decoded = Buffer.from(call.response.join(""), "hex");
               const unzipped = zlib.gunzipSync(decoded).toString("utf8");
 
-              call.response = JSON.parse(unzipped);
+              try {
+                call.response = JSON.parse(unzipped);
+              } catch (error) {
+                // Not all content is JSON!
+              }
             }
 
+            const headers: { [key: string]: string } = {};
+
+            while (call.rawHeaders.length) {
+              // @ts-ignore Object is possibly 'undefined'.ts(2532)
+              const header = call.rawHeaders.shift().toLowerCase();
+              const value = call.rawHeaders.shift();
+
+              // @ts-ignore Type 'string | undefined' is not assignable to type 'string'.
+              // Type 'undefined' is not assignable to type 'string'.ts(2322)
+              headers[header] = value;
+            }
+
+            // Sorted
+            call.headers = Object.keys(headers)
+              .sort((a, b) => b.localeCompare(a))
+              .reduce((acc, header) => {
+                return {
+                  [header]: headers[header],
+                  ...acc
+                };
+              }, {});
+
+            return call;
+          })
+          .filter(this.filter)
+          .forEach((call: Call) => {
             const fixture = JSON.stringify(omit(call, ["rawHeaders"]), null, 2);
             const fixturePath = this.getFixturePath(call, username);
 
