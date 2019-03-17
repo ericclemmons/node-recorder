@@ -8,6 +8,7 @@ import * as url from "url";
 import * as zlib from "zlib";
 
 import { Call } from "./Call";
+import { Fixture } from "./Fixture";
 
 const fnv1a = require("@sindresorhus/fnv1a");
 
@@ -71,30 +72,33 @@ export class Recorder {
     return this;
   }
 
-  getFixturePath(call: Call, username = "all") {
-    const { hostname } = url.parse(call.scope);
-    const { pathname } = url.parse(call.path);
+  // TODO Use `Fixture`, but not values have to be sent
+  getFixturePath(fixture: any, username = "all") {
+    const { hostname } = url.parse(fixture.scope);
+    const { pathname } = url.parse(fixture.path);
 
     if (!hostname) {
-      console.error(call);
+      console.error(fixture);
       throw new Error(
         `Cannot parse hostname from fixture's "scope": ${JSON.stringify(
-          call.scope
+          fixture.scope
         )}`
       );
     }
 
     if (!pathname) {
-      console.error(call);
+      console.error(fixture);
       throw new Error(
         `Cannot parse pathname from fixture's "path": ${JSON.stringify(
-          call.path
+          fixture.path
         )}`
       );
     }
 
     const hash = fnv1a(
-      JSON.stringify(pick(call, "scope", "method", "path", "body"))
+      JSON.stringify(
+        pick(fixture, "scope", "method", "path", "body", "reqheaders")
+      )
     );
 
     // TODO Allow `user` to be a callback here
@@ -206,11 +210,11 @@ export class Recorder {
           })
           .filter(this.filter)
           .forEach((call: Call) => {
-            const fixture = JSON.stringify(omit(call, ["rawHeaders"]), null, 2);
-            const fixturePath = this.getFixturePath(call, username);
+            const fixture = omit(call, ["rawHeaders"]);
+            const fixturePath = this.getFixturePath(fixture, username);
 
             mkdirp.sync(path.dirname(fixturePath));
-            fs.writeFileSync(fixturePath, fixture);
+            fs.writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));
           });
       },
       output_objects: true
