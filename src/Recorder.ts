@@ -122,6 +122,7 @@ export class Recorder {
   replay(username = "all") {
     nock.restore();
     nock.activate();
+    nock.disableNetConnect();
 
     // Ensure we have no prior mocks conflicting
     nock.cleanAll();
