@@ -1,0 +1,33 @@
+{
+  "scope": "http://127.0.0.1:54234",
+  "method": "POST",
+  "path": "/graphql",
+  "body": {
+    "query": "{\n            github {\n              rateLimit {\n                limit\n                remaining\n              }\n            }\n          }"
+  },
+  "status": 200,
+  "response": {
+    "data": {
+      "github": {
+        "rateLimit": {
+          "limit": 60,
+          "remaining": 60
+        }
+      }
+    }
+  },
+  "reqheaders": {
+    "host": "127.0.0.1:54234",
+    "accept-encoding": "gzip, deflate",
+    "content-type": "application/json",
+    "cookie": "back-to-the-fixture-example=s%3AkU4zUzZHAkWgyDRbNNs4Yr95yEmcrXI4.UuqDvzaKpCONuv25RqAiAHXNdJ%2FEVP2QaNgnrhT50qk",
+    "content-length": 157
+  },
+  "headers": {
+    "connection": "close",
+    "content-length": "115",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 19 Mar 2019 01:57:45 GMT",
+    "x-powered-by": "Express"
+  }
+}

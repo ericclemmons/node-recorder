@@ -1,0 +1,20 @@
+{
+  "scope": "http://127.0.0.1",
+  "method": "POST",
+  "path": "/graphql",
+  "body": "",
+  "status": 403,
+  "response": "<a href=\"/login\">Login</a>",
+  "reqheaders": {
+    "host": "http://127.0.0.1",
+    "accept-encoding": "gzip, deflate"
+  },
+  "headers": {
+    "connection": "close",
+    "content-length": "26",
+    "content-type": "text/html; charset=utf-8",
+    "date": "Tue, 19 Mar 2019 01:57:45 GMT",
+    "etag": "W/\"1a-wd3g1SL6axCTyRDS7sN9N8Xgk/M\"",
+    "x-powered-by": "Express"
+  }
+}

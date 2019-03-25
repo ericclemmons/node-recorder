@@ -1,0 +1,22 @@
+{
+  "scope": "http://127.0.0.1",
+  "method": "GET",
+  "path": "/login",
+  "body": "",
+  "status": 302,
+  "response": "Found. Redirecting to /",
+  "reqheaders": {
+    "host": "http://127.0.0.1",
+    "accept-encoding": "gzip, deflate"
+  },
+  "headers": {
+    "connection": "close",
+    "content-length": "23",
+    "content-type": "text/plain; charset=utf-8",
+    "date": "Tue, 19 Mar 2019 01:57:45 GMT",
+    "location": "/",
+    "set-cookie": "back-to-the-fixture-example=s%3AkU4zUzZHAkWgyDRbNNs4Yr95yEmcrXI4.UuqDvzaKpCONuv25RqAiAHXNdJ%2FEVP2QaNgnrhT50qk; Path=/; HttpOnly",
+    "vary": "Accept",
+    "x-powered-by": "Express"
+  }
+}

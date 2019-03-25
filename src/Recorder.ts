@@ -1,224 +1,264 @@
-import * as fs from "fs";
-import * as globby from "globby";
-import { omit, pick } from "lodash";
-import * as mkdirp from "mkdirp";
+import * as http from "http";
+import * as https from "https";
+import { isObjectLike } from "lodash";
 import * as nock from "nock";
-import * as path from "path";
-import * as url from "url";
-import * as zlib from "zlib";
+import * as semver from "semver";
+import * as URL from "url";
 
-import { Call } from "./Call";
-import { Fixture } from "./Fixture";
+import { parseRequestArguments } from "./parseRequestArguments";
+import { getUrlFromOptions } from "./getUrlFromOptions";
 
-const fnv1a = require("@sindresorhus/fnv1a");
+const REQUEST_ARGUMENTS = new WeakMap();
+const debug = require("debug")("back-to-the-fixture");
 
-import { Mode } from "./Mode";
+nock.restore();
 
-interface Filter {
-  (call: Call, index: number, calls: Call[]): boolean;
-}
-
-interface Options {
-  filter?: Filter;
-  mode?: Mode;
-  fixturesPath?: string;
-  user?: string;
-}
-
-export const DefaultOptions = {
-  filter: (call: Call) => true,
-  mode: Mode.LIVE,
-  fixturesPath: path.join(process.cwd(), "__fixtures__"),
-  user: "all"
-};
+const isContentEncoded = require("./isContentEncoded");
 
 export class Recorder {
-  filter = DefaultOptions.filter;
-  mode = DefaultOptions.mode;
-  fixturesPath = DefaultOptions.fixturesPath;
-  user = DefaultOptions.user;
+  NativeClientRequest = http.ClientRequest;
 
-  constructor(options?: Options) {
-    if (options) {
-      this.configure(options);
-    }
-
-    nock.restore();
-    nock.cleanAll();
-
-    if (!nock.isActive()) {
-      nock.activate();
-    }
+  constructor() {
+    this.setupNock();
+    this.patchOverriddenMethods();
   }
 
-  configure(options: Options) {
-    Object.assign(this, DefaultOptions, options);
+  getBodyFromChunks(chunks: string[], headers: any) {
+    // If content-encoding is set in the header then the body/content
+    // should not be concatenated. Instead, the chunks should
+    // be preserved as-is so that each chunk can be mocked individually
+    if (isContentEncoded(headers)) {
+      const hexChunks = chunks.map(chunk => {
+        if (!Buffer.isBuffer(chunk)) {
+          if (typeof chunk === "string") {
+            throw new Error(
+              "content-encoded responses must all be binary buffers"
+            );
+          }
 
-    switch (this.mode) {
-      case undefined:
-        break;
-      case Mode.LIVE:
-        break;
-      case Mode.RECORD:
-        this.record(this.user);
-        break;
-      case Mode.REPLAY:
-        this.replay(this.user);
-        break;
-      default:
-        throw new Error(`Unknown "mode": ${this.mode}`);
-    }
+          // @ts-ignore
+          chunk = Buffer.from(chunk);
+        }
 
-    return this;
-  }
-
-  // TODO Use `Fixture`, but not values have to be sent
-  getFixturePath(fixture: any, username = "all") {
-    const { hostname } = url.parse(fixture.scope);
-    const { pathname } = url.parse(fixture.path);
-
-    if (!hostname) {
-      console.error(fixture);
-      throw new Error(
-        `Cannot parse hostname from fixture's "scope": ${JSON.stringify(
-          fixture.scope
-        )}`
-      );
-    }
-
-    if (!pathname) {
-      console.error(fixture);
-      throw new Error(
-        `Cannot parse pathname from fixture's "path": ${JSON.stringify(
-          fixture.path
-        )}`
-      );
-    }
-
-    const hash = fnv1a(
-      JSON.stringify(
-        pick(fixture, "scope", "method", "path", "body", "reqheaders")
-      )
-    );
-
-    // TODO Allow `user` to be a callback here
-
-    const file = path.join(
-      this.fixturesPath,
-      hostname,
-      pathname,
-      `${hash}.${username}.json`
-    );
-
-    // TODO Allow `fixturesPath` to be dynamic
-
-    return file;
-  }
-
-  /**
-   * Load previous recordings & mock HTTP requests
-   * @see https://github.com/nock/nock#activating
-   */
-  replay(username = "all") {
-    nock.restore();
-    nock.activate();
-    nock.disableNetConnect();
-
-    // Ensure we have no prior mocks conflicting
-    nock.cleanAll();
-
-    const recordings = globby.sync(`**/*.+(${username}|all).json`, {
-      cwd: this.fixturesPath
-    });
-
-    recordings
-      .map(pathname => path.join(this.fixturesPath, pathname))
-      .map(file => JSON.parse(fs.readFileSync(file, "utf8")))
-      .filter(this.filter)
-      .forEach((call: Call) => {
-        const { reqheaders } = call;
-
-        nock(call.scope, { reqheaders })
-          .intercept(call.path, call.method as string, call.body)
-          .reply(call.status as number, call.response)
-          .persist();
+        // @ts-ignore
+        return chunk.toString("hex");
       });
+
+      return JSON.stringify(hexChunks);
+    }
+
+    const buffer = mergeChunks(chunks);
+
+    // The merged buffer can be one of two things:
+    //  1. A binary buffer which then has to be recorded as a hex string.
+    //  2. A string buffer.
+    return buffer.toString(isBinaryBuffer(buffer) ? "hex" : "utf8");
   }
 
-  /**
-   * Start recording HTTP requests as mocks
-   * @see https://github.com/nock/nock#restoring
-   */
-  record(username = "all") {
-    nock.restore();
+  getChunksFromBody(body: string, headers: any) {
+    if (!body) {
+      return [];
+    }
 
-    nock.recorder.rec({
-      // Need this to trigger our logger
-      dont_print: false,
-      enable_reqheaders_recording: true,
-      logging: args => {
-        // nock uses a singleton for recording, so we have to clear the stack to prevent race-conditions
-        const calls: Call[] = nock.recorder.play() as any;
+    if (Buffer.isBuffer(body)) {
+      return [body];
+    }
 
-        nock.recorder.clear();
+    // If content-encoding is set in the header then the body/content
+    // is as an array of hex strings
+    if (isContentEncoded(headers)) {
+      const hexChunks = JSON.parse(body);
 
-        calls
-          .map((call: Call) => {
-            const contentEncoding =
-              call.rawHeaders[call.rawHeaders.indexOf("Content-Encoding") + 1];
+      return hexChunks.map((chunk: string) => Buffer.from(chunk, "hex"));
+    }
 
-            const transferEncoding =
-              call.rawHeaders[call.rawHeaders.indexOf("Transfer-Encoding") + 1];
+    const buffer = Buffer.from(body) as any;
 
-            if (
-              contentEncoding === "gzip" &&
-              transferEncoding === "chunked" &&
-              Array.isArray(call.response)
-            ) {
-              const decoded = Buffer.from(call.response.join(""), "hex");
-              const unzipped = zlib.gunzipSync(decoded).toString("utf8");
+    // The body can be one of two things:
+    //  1. A hex string which then means its binary data.
+    //  2. A utf8 string which means a regular string.
+    return [Buffer.from(buffer, isBinaryBuffer(buffer) ? "hex" : "utf8")];
+  }
 
-              try {
-                call.response = JSON.parse(unzipped);
-              } catch (error) {
-                // Not all content is JSON!
-              }
-            }
+  async handleRequest(pollyRequest: any) {
+    const { body, headers, method, url } = pollyRequest;
+    const { respond } = pollyRequest.requestArguments;
 
-            const headers: { [key: string]: string } = {};
+    debug("handleRequest %O", { method, url, headers, body });
 
-            while (call.rawHeaders.length) {
-              // @ts-ignore Object is possibly 'undefined'.ts(2532)
-              const header = call.rawHeaders.shift().toLowerCase();
-              const value = call.rawHeaders.shift();
+    // TODO If replaying, find existing fixture & replay it
+    // TODO If no fixture or recording, record it.
 
-              // @ts-ignore Type 'string | undefined' is not assignable to type 'string'.
-              // Type 'undefined' is not assignable to type 'string'.ts(2322)
-              headers[header] = value;
-            }
+    const response = await this.passthroughRequest(pollyRequest);
 
-            // Sorted
-            call.headers = Object.keys(headers)
-              .sort((a, b) => b.localeCompare(a))
-              .reduce((acc, header) => {
-                return {
-                  [header]: headers[header],
-                  ...acc
-                };
-              }, {});
+    try {
+      respond(null, [response.statusCode, response.body, response.headers]);
+    } catch (error) {
+      respond(error);
 
-            return call;
-          })
-          .filter(this.filter)
-          .forEach((call: Call) => {
-            const fixture = omit(call, ["rawHeaders"]);
-            const fixturePath = this.getFixturePath(fixture, username);
+      throw error;
+    }
+  }
 
-            mkdirp.sync(path.dirname(fixturePath));
-            fs.writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));
-          });
-      },
-      output_objects: true
+  async passthroughRequest(pollyRequest: any) {
+    const { parsedArguments } = pollyRequest.requestArguments;
+    const { method, headers, body } = pollyRequest;
+    const { options } = parsedArguments;
+
+    const request = new this.NativeClientRequest({
+      ...options,
+      method,
+      headers: { ...headers },
+      ...URL.parse(pollyRequest.url)
     });
+
+    const chunks = this.getChunksFromBody(body, headers);
+
+    const responsePromise = new Promise((resolve, reject) => {
+      request.once("response", resolve);
+      request.once("error", reject);
+      request.once("timeout", reject);
+    });
+
+    // Write the request body
+    chunks.forEach(chunk => request.write(chunk));
+    request.end();
+
+    const response = await responsePromise;
+    const responseBody = await new Promise((resolve, reject) => {
+      const chunks = [];
+
+      response.on("data", chunk => chunks.push(chunk));
+      response.once("end", () =>
+        resolve(this.getBodyFromChunks(chunks, response.headers))
+      );
+      response.once("error", reject);
+    });
+
+    return {
+      headers: response.headers,
+      statusCode: response.statusCode,
+      body: responseBody
+    };
+  }
+
+  patchOverriddenMethods() {
+    const modules = { http, https };
+    const { ClientRequest } = http;
+
+    // Patch the already overridden ClientRequest class so we can get
+    // access to the original arguments and use them when creating the
+    // passthrough request.
+    // @ts-ignore
+    http.ClientRequest = function _ClientRequest() {
+      // @ts-ignore
+      const req = new ClientRequest(...arguments);
+
+      REQUEST_ARGUMENTS.set(req, [...arguments]);
+
+      return req;
+    };
+
+    // Patch http.request, http.get, https.request, and https.get
+    // to support new Node.js 10.9 signature `http.request(url[, options][, callback])`
+    // (https://github.com/nock/nock/issues/1227).
+    //
+    // This patch is also needed to set some default values which nock doesn't
+    // properly set.
+    Object.keys(modules).forEach(moduleName => {
+      // @ts-ignore
+      const module = modules[moduleName];
+      const { request, get, globalAgent } = module;
+      const parseArgs = function() {
+        // @ts-ignore
+        const args = parseRequestArguments(...arguments);
+
+        if (moduleName === "https") {
+          args.options = {
+            ...{ port: 443, protocol: "https:", _defaultAgent: globalAgent },
+            ...args.options
+          };
+        } else {
+          args.options = {
+            ...{ port: 80, protocol: "http:" },
+            ...args.options
+          };
+        }
+
+        return args;
+      };
+
+      module.request = function _request() {
+        // @ts-ignore
+        const { options, callback } = parseArgs(...arguments);
+
+        return request(options, callback);
+      };
+
+      if (semver.satisfies(process.version, ">=8")) {
+        module.get = function _get() {
+          // @ts-ignore
+          const { options, callback } = parseArgs(...arguments);
+
+          return get(options, callback);
+        };
+      }
+    });
+  }
+
+  setupNock() {
+    const adapter = this;
+
+    // Make sure there aren't any other interceptors defined
+    nock.cleanAll();
+
+    // Create our interceptor that will match all hosts
+    const interceptor = nock(/.*/).persist();
+
+    [
+      "GET",
+      "PUT",
+      "POST",
+      "DELETE",
+      "PATCH",
+      "MERGE",
+      "HEAD",
+      "OPTIONS"
+    ].forEach(m => {
+      // Add an intercept for each supported HTTP method that will match all paths
+      interceptor.intercept(/.*/, m).reply(function(_, body, respond) {
+        // @ts-ignore
+        const { req, method } = this;
+        const { headers } = req;
+        // @ts-ignore
+        const parsedArguments = parseRequestArguments(
+          ...REQUEST_ARGUMENTS.get(req)
+        );
+        const url = getUrlFromOptions(parsedArguments.options);
+
+        // body will always be a string unless the content-type is application/json
+        // in which nock will then parse into an object. We have our own way of
+        // dealing with json content to convert it back to a string.
+        if (body && typeof body !== "string") {
+          body = JSON.stringify(body);
+        }
+
+        adapter
+          .handleRequest({
+            url,
+            method,
+            headers,
+            body,
+            requestArguments: { req, body, respond, parsedArguments }
+          })
+          .catch(e => {
+            // This allows the consumer to handle the error gracefully
+            req.emit("error", e);
+          });
+      });
+    });
+
+    // Activate nock so it can start to intercept all outgoing requests
+    nock.activate();
   }
 }

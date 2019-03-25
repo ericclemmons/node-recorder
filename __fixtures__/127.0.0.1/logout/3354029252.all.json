@@ -1,0 +1,23 @@
+{
+  "scope": "http://127.0.0.1",
+  "method": "GET",
+  "path": "/logout",
+  "body": "",
+  "status": 302,
+  "response": "Found. Redirecting to /",
+  "reqheaders": {
+    "host": "http://127.0.0.1",
+    "accept-encoding": "gzip, deflate",
+    "cookie": "back-to-the-fixture-example=s%3Aq8wq0_jlCKkmR7U16Gr_89mz06zl1ker.PF58rU87sNaEa9z462582zzqbapILTfwaPmsSgKGY74"
+  },
+  "headers": {
+    "connection": "close",
+    "content-length": "23",
+    "content-type": "text/plain; charset=utf-8",
+    "date": "Tue, 19 Mar 2019 01:57:45 GMT",
+    "location": "/",
+    "set-cookie": "back-to-the-fixture-example=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    "vary": "Accept",
+    "x-powered-by": "Express"
+  }
+}

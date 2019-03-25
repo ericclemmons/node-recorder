@@ -18,6 +18,7 @@
     "@types/mkdirp": "^0.5.2",
     "@types/nock": "^9.3.1",
     "@types/node-fetch": "^2.1.6",
+    "@types/semver": "^5.5.0",
     "@types/sindresorhus__fnv1a": "^1.0.0",
     "@types/supertest": "^2.0.7",
     "express-graphql": "^0.7.1",
@@ -47,6 +48,9 @@
     "globby": "^9.0.0",
     "lodash": "^4.17.11",
     "mkdirp": "^0.5.1",
-    "nock": "^10.0.6"
+    "nock": "^10.0.6",
+    "qs": "^6.6.0",
+    "semver": "^5.6.0",
+    "url-parse": "^1.4.4"
   }
 }
