@@ -1,224 +1,162 @@
-import * as fs from "fs";
-import * as globby from "globby";
-import { omit, pick } from "lodash";
-import * as mkdirp from "mkdirp";
+import * as http from "http";
+import * as https from "https";
 import * as nock from "nock";
-import * as path from "path";
-import * as url from "url";
-import * as zlib from "zlib";
-
-import { Call } from "./Call";
-import { Fixture } from "./Fixture";
-
-const fnv1a = require("@sindresorhus/fnv1a");
 
 import { Mode } from "./Mode";
 
-interface Filter {
-  (call: Call, index: number, calls: Call[]): boolean;
+const REQUEST_ARGUMENTS = new WeakMap();
+
+nock.restore();
+
+enum Methods {
+  GET = "GET",
+  POST = "POST"
 }
 
-interface Options {
-  filter?: Filter;
-  mode?: Mode;
-  fixturesPath?: string;
-  user?: string;
+interface Headers {
+  [key: string]: string;
 }
 
-export const DefaultOptions = {
-  filter: (call: Call) => true,
-  mode: Mode.LIVE,
-  fixturesPath: path.join(process.cwd(), "__fixtures__"),
-  user: "all"
-};
+interface InterceptedRequest {
+  body: string;
+  headers: {
+    [key: string]: string;
+  };
+  method: Methods;
+  options: {
+    [key: string]: string;
+  }; // http.RequestOptions;
+  respond: nock.ReplyCallback;
+}
 
 export class Recorder {
-  filter = DefaultOptions.filter;
-  mode = DefaultOptions.mode;
-  fixturesPath = DefaultOptions.fixturesPath;
-  user = DefaultOptions.user;
+  httpRequest = http.request;
+  httpsRequest = https.request;
+  mode: Mode = Mode.IGNORE;
 
-  constructor(options?: Options) {
-    if (options) {
-      this.configure(options);
-    }
-
-    nock.restore();
-    nock.cleanAll();
-
-    if (!nock.isActive()) {
-      nock.activate();
-    }
+  constructor() {
+    this.setupNock();
+    this.patchNock();
   }
 
-  configure(options: Options) {
-    Object.assign(this, DefaultOptions, options);
+  handleRequest = (interceptedRequest: InterceptedRequest) => {
+    const { mode } = this;
 
-    switch (this.mode) {
-      case undefined:
-        break;
-      case Mode.LIVE:
-        break;
-      case Mode.RECORD:
-        this.record(this.user);
-        break;
-      case Mode.REPLAY:
-        this.replay(this.user);
-        break;
+    switch (mode) {
+      case Mode.IGNORE:
+        return this.ignoreRequest(interceptedRequest);
+
       default:
-        throw new Error(`Unknown "mode": ${this.mode}`);
+        throw new Error(`Mode.${mode} is not supported`);
     }
+  };
 
-    return this;
+  ignore() {
+    this.mode = Mode.IGNORE;
   }
 
-  // TODO Use `Fixture`, but not values have to be sent
-  getFixturePath(fixture: any, username = "all") {
-    const { hostname } = url.parse(fixture.scope);
-    const { pathname } = url.parse(fixture.path);
+  ignoreRequest = async (interceptedRequest: InterceptedRequest) => {
+    const { body, headers, method, options, respond } = interceptedRequest;
 
-    if (!hostname) {
-      console.error(fixture);
-      throw new Error(
-        `Cannot parse hostname from fixture's "scope": ${JSON.stringify(
-          fixture.scope
-        )}`
-      );
-    }
+    const request = (options.proto === "https"
+      ? this.httpsRequest
+      : this.httpRequest)({
+      ...options,
+      method,
+      headers
+    });
 
-    if (!pathname) {
-      console.error(fixture);
-      throw new Error(
-        `Cannot parse pathname from fixture's "path": ${JSON.stringify(
-          fixture.path
-        )}`
-      );
-    }
+    const responsePromise = new Promise((resolve, reject) => {
+      request.once("response", resolve);
+      request.once("error", reject);
+      request.once("timeout", reject);
+    });
 
-    const hash = fnv1a(
-      JSON.stringify(
-        pick(fixture, "scope", "method", "path", "body", "reqheaders")
-      )
-    );
+    request.write(body);
+    request.end();
 
-    // TODO Allow `user` to be a callback here
+    const response = (await responsePromise) as http.IncomingMessage;
+    const responseBody = await new Promise((resolve, reject) => {
+      const chunks: any[] = [];
 
-    const file = path.join(
-      this.fixturesPath,
-      hostname,
-      pathname,
-      `${hash}.${username}.json`
-    );
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.once("end", () => {
+        const { headers } = response;
 
-    // TODO Allow `fixturesPath` to be dynamic
+        if (
+          headers["content-encoding"] === "gzip" &&
+          headers["transfer-encoding"] === "chunked"
+        ) {
+          const decoded = Buffer.concat(chunks);
 
-    return file;
+          resolve(decoded);
+        } else {
+          resolve(Buffer.concat(chunks).toString("utf8"));
+        }
+      });
+
+      response.once("error", reject);
+    });
+
+    respond(null, [response.statusCode, responseBody, response.headers]);
+  };
+
+  record() {
+    this.mode = Mode.RECORD;
   }
 
-  /**
-   * Load previous recordings & mock HTTP requests
-   * @see https://github.com/nock/nock#activating
-   */
-  replay(username = "all") {
-    nock.restore();
-    nock.activate();
-    nock.disableNetConnect();
+  replay() {
+    this.mode = Mode.REPLAY;
+  }
 
-    // Ensure we have no prior mocks conflicting
+  rerecord() {
+    this.mode = Mode.RERECORD;
+  }
+
+  patchNock = () => {
+    // This is Nock's `OverriddenClientRequest`
+    const { ClientRequest } = http;
+
+    // @ts-ignore
+    http.ClientRequest = function recordClientRequest(
+      url: string | URL | http.ClientRequestArgs,
+      cb?: (res: http.IncomingMessage) => void
+    ) {
+      const req = new ClientRequest(url, cb);
+
+      REQUEST_ARGUMENTS.set(req, [url, cb]);
+
+      return req;
+    };
+  };
+
+  setupNock = () => {
     nock.cleanAll();
 
-    const recordings = globby.sync(`**/*.+(${username}|all).json`, {
-      cwd: this.fixturesPath
+    const interceptor = nock(/.*/).persist();
+    const recorder = this;
+
+    Object.keys(Methods).forEach((m) => {
+      interceptor
+        .intercept(/.*/, m)
+        .reply(async function reply(uri, body, respond) {
+          // @ts-ignore
+          const { method, req } = this as any;
+          const { headers } = req;
+          const [options] = REQUEST_ARGUMENTS.get(req);
+
+          const interceptedRequest: InterceptedRequest = {
+            body,
+            headers,
+            method,
+            options,
+            respond: respond as nock.ReplyCallback
+          };
+
+          recorder.handleRequest(interceptedRequest);
+        });
     });
 
-    recordings
-      .map(pathname => path.join(this.fixturesPath, pathname))
-      .map(file => JSON.parse(fs.readFileSync(file, "utf8")))
-      .filter(this.filter)
-      .forEach((call: Call) => {
-        const { reqheaders } = call;
-
-        nock(call.scope, { reqheaders })
-          .intercept(call.path, call.method as string, call.body)
-          .reply(call.status as number, call.response)
-          .persist();
-      });
-  }
-
-  /**
-   * Start recording HTTP requests as mocks
-   * @see https://github.com/nock/nock#restoring
-   */
-  record(username = "all") {
-    nock.restore();
-
-    nock.recorder.rec({
-      // Need this to trigger our logger
-      dont_print: false,
-      enable_reqheaders_recording: true,
-      logging: args => {
-        // nock uses a singleton for recording, so we have to clear the stack to prevent race-conditions
-        const calls: Call[] = nock.recorder.play() as any;
-
-        nock.recorder.clear();
-
-        calls
-          .map((call: Call) => {
-            const contentEncoding =
-              call.rawHeaders[call.rawHeaders.indexOf("Content-Encoding") + 1];
-
-            const transferEncoding =
-              call.rawHeaders[call.rawHeaders.indexOf("Transfer-Encoding") + 1];
-
-            if (
-              contentEncoding === "gzip" &&
-              transferEncoding === "chunked" &&
-              Array.isArray(call.response)
-            ) {
-              const decoded = Buffer.from(call.response.join(""), "hex");
-              const unzipped = zlib.gunzipSync(decoded).toString("utf8");
-
-              try {
-                call.response = JSON.parse(unzipped);
-              } catch (error) {
-                // Not all content is JSON!
-              }
-            }
-
-            const headers: { [key: string]: string } = {};
-
-            while (call.rawHeaders.length) {
-              // @ts-ignore Object is possibly 'undefined'.ts(2532)
-              const header = call.rawHeaders.shift().toLowerCase();
-              const value = call.rawHeaders.shift();
-
-              // @ts-ignore Type 'string | undefined' is not assignable to type 'string'.
-              // Type 'undefined' is not assignable to type 'string'.ts(2322)
-              headers[header] = value;
-            }
-
-            // Sorted
-            call.headers = Object.keys(headers)
-              .sort((a, b) => b.localeCompare(a))
-              .reduce((acc, header) => {
-                return {
-                  [header]: headers[header],
-                  ...acc
-                };
-              }, {});
-
-            return call;
-          })
-          .filter(this.filter)
-          .forEach((call: Call) => {
-            const fixture = omit(call, ["rawHeaders"]);
-            const fixturePath = this.getFixturePath(fixture, username);
-
-            mkdirp.sync(path.dirname(fixturePath));
-            fs.writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));
-          });
-      },
-      output_objects: true
-    });
-  }
+    nock.activate();
+  };
 }

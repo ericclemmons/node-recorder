@@ -1,5 +1,6 @@
 export enum Mode {
-  LIVE = "live",
+  IGNORE = "ignore",
   RECORD = "record",
-  REPLAY = "replay"
+  REPLAY = "replay",
+  RERECORD = "rerecord"
 }
