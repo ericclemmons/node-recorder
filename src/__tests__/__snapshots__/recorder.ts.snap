@@ -1,0 +1,200 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`recorder .ignore() should ignore fixtures & make the call 1`] = `"received is not a function"`;
+
+exports[`recorder .record() should keep existing fixtures 1`] = `
+Object {
+  "info": Object {
+    "page": 1,
+    "results": 1,
+    "seed": "6813b6f48d1766e3",
+    "version": "1.2",
+  },
+  "results": Array [
+    Object {
+      "cell": "49887318",
+      "dob": Object {
+        "age": 57,
+        "date": "1961-10-10T11:56:31Z",
+      },
+      "email": "stella.fimreite@example.com",
+      "gender": "female",
+      "id": Object {
+        "name": "FN",
+        "value": "10106137329",
+      },
+      "location": Object {
+        "city": "gjøvik",
+        "coordinates": Object {
+          "latitude": "50.1563",
+          "longitude": "102.7756",
+        },
+        "postcode": "1636",
+        "state": "vestfold",
+        "street": "fyrstikkbakken 9225",
+        "timezone": Object {
+          "description": "Tehran",
+          "offset": "+3:30",
+        },
+      },
+      "login": Object {
+        "md5": "85dd6d7234f4b2b71a6d135932cca342",
+        "password": "coolman",
+        "salt": "sVWGMIEX",
+        "sha1": "1d40cdebfa202fa38102254004f1ad7b29f74f93",
+        "sha256": "7f8c4cf7054433b15876bcd6bb1b7654cf18f9b2436c9ab2a49b08cebdd6561a",
+        "username": "tinywolf518",
+        "uuid": "e309133f-c4cc-4898-bc4e-e757a81ac3d9",
+      },
+      "name": Object {
+        "first": "stella",
+        "last": "fimreite",
+        "title": "miss",
+      },
+      "nat": "NO",
+      "phone": "60681862",
+      "picture": Object {
+        "large": "https://randomuser.me/api/portraits/women/62.jpg",
+        "medium": "https://randomuser.me/api/portraits/med/women/62.jpg",
+        "thumbnail": "https://randomuser.me/api/portraits/thumb/women/62.jpg",
+      },
+      "registered": Object {
+        "age": 9,
+        "date": "2009-10-31T03:36:49Z",
+      },
+    },
+  ],
+}
+`;
+
+exports[`recorder .replay should replay existing fixtures 1`] = `
+Object {
+  "info": Object {
+    "page": 1,
+    "results": 1,
+    "seed": "6813b6f48d1766e3",
+    "version": "1.2",
+  },
+  "results": Array [
+    Object {
+      "cell": "49887318",
+      "dob": Object {
+        "age": 57,
+        "date": "1961-10-10T11:56:31Z",
+      },
+      "email": "stella.fimreite@example.com",
+      "gender": "female",
+      "id": Object {
+        "name": "FN",
+        "value": "10106137329",
+      },
+      "location": Object {
+        "city": "gjøvik",
+        "coordinates": Object {
+          "latitude": "50.1563",
+          "longitude": "102.7756",
+        },
+        "postcode": "1636",
+        "state": "vestfold",
+        "street": "fyrstikkbakken 9225",
+        "timezone": Object {
+          "description": "Tehran",
+          "offset": "+3:30",
+        },
+      },
+      "login": Object {
+        "md5": "85dd6d7234f4b2b71a6d135932cca342",
+        "password": "coolman",
+        "salt": "sVWGMIEX",
+        "sha1": "1d40cdebfa202fa38102254004f1ad7b29f74f93",
+        "sha256": "7f8c4cf7054433b15876bcd6bb1b7654cf18f9b2436c9ab2a49b08cebdd6561a",
+        "username": "tinywolf518",
+        "uuid": "e309133f-c4cc-4898-bc4e-e757a81ac3d9",
+      },
+      "name": Object {
+        "first": "stella",
+        "last": "fimreite",
+        "title": "miss",
+      },
+      "nat": "NO",
+      "phone": "60681862",
+      "picture": Object {
+        "large": "https://randomuser.me/api/portraits/women/62.jpg",
+        "medium": "https://randomuser.me/api/portraits/med/women/62.jpg",
+        "thumbnail": "https://randomuser.me/api/portraits/thumb/women/62.jpg",
+      },
+      "registered": Object {
+        "age": 9,
+        "date": "2009-10-31T03:36:49Z",
+      },
+    },
+  ],
+}
+`;
+
+exports[`recorder .replay should throw when a fixture doesn't exist 1`] = `"request to https://some.fake.api/ failed, reason: ENOENT: no such file or directory, open '/Users/eric/Projects/ericclemmons/back-to-the-fixture/__fixtures__/some.fake.api/2594076479.json'"`;
+
+exports[`recorder .rerecord() should replace existing fixtures 1`] = `
+Object {
+  "info": Object {
+    "page": 1,
+    "results": 1,
+    "seed": "7df300eef3cce930",
+    "version": "1.2",
+  },
+  "results": Array [
+    Object {
+      "cell": "(611)-769-5440",
+      "dob": Object {
+        "age": 25,
+        "date": "1993-06-17T08:45:32Z",
+      },
+      "email": "davut.pektemek@example.com",
+      "gender": "male",
+      "id": Object {
+        "name": "",
+        "value": null,
+      },
+      "location": Object {
+        "city": "amasya",
+        "coordinates": Object {
+          "latitude": "79.2179",
+          "longitude": "-105.5617",
+        },
+        "postcode": 29882,
+        "state": "edirne",
+        "street": "6290 necatibey cd",
+        "timezone": Object {
+          "description": "Tokyo, Seoul, Osaka, Sapporo, Yakutsk",
+          "offset": "+9:00",
+        },
+      },
+      "login": Object {
+        "md5": "8b8bf7fdce87bf91c0d66d54ea593623",
+        "password": "ontario",
+        "salt": "yyawxWhC",
+        "sha1": "7f70a43f03ead713e7b968239864475dbf68f695",
+        "sha256": "a434a07c386a2644bd5f01c479b51a6282539f069385b992aca21c46a1614c14",
+        "username": "crazywolf241",
+        "uuid": "4aea8043-6605-45c1-ba4f-2e9e4d0ffc62",
+      },
+      "name": Object {
+        "first": "davut",
+        "last": "pektemek",
+        "title": "mr",
+      },
+      "nat": "TR",
+      "phone": "(280)-998-4117",
+      "picture": Object {
+        "large": "https://randomuser.me/api/portraits/men/90.jpg",
+        "medium": "https://randomuser.me/api/portraits/med/men/90.jpg",
+        "thumbnail": "https://randomuser.me/api/portraits/thumb/men/90.jpg",
+      },
+      "registered": Object {
+        "age": 6,
+        "date": "2012-04-10T14:13:30Z",
+      },
+    },
+  ],
+}
+`;

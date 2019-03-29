@@ -1,0 +1,104 @@
+{
+  "request": {
+    "method": "GET",
+    "href": "https://randomuser.me/api",
+    "headers": {
+      "accept": [
+        "*/*"
+      ],
+      "user-agent": [
+        "node-fetch/1.0 (+https://github.com/bitinn/node-fetch)"
+      ],
+      "accept-encoding": [
+        "gzip,deflate"
+      ],
+      "connection": [
+        "close"
+      ],
+      "host": "randomuser.me"
+    },
+    "body": ""
+  },
+  "response": {
+    "statusCode": 200,
+    "headers": {
+      "date": "Fri, 29 Mar 2019 05:27:14 GMT",
+      "content-type": "application/json; charset=utf-8",
+      "connection": "close",
+      "set-cookie": [
+        "__cfduid=d185a1fe5f50ba8d658af1acec08221801553837233; expires=Sat, 28-Mar-20 05:27:13 GMT; path=/; domain=.randomuser.me; HttpOnly"
+      ],
+      "x-powered-by": "Express",
+      "access-control-allow-origin": "*",
+      "cache-control": "no-cache",
+      "etag": "W/\"445-TcgLw/SGVEl6B1jStR0EGw\"",
+      "vary": "Accept-Encoding",
+      "expect-ct": "max-age=604800, report-uri=\"https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct\"",
+      "server": "cloudflare",
+      "cf-ray": "4bef6ef62ff5c97f-SEA",
+      "content-encoding": "application/json"
+    },
+    "body": {
+      "results": [
+        {
+          "gender": "female",
+          "name": {
+            "title": "miss",
+            "first": "stella",
+            "last": "fimreite"
+          },
+          "location": {
+            "street": "fyrstikkbakken 9225",
+            "city": "gjøvik",
+            "state": "vestfold",
+            "postcode": "1636",
+            "coordinates": {
+              "latitude": "50.1563",
+              "longitude": "102.7756"
+            },
+            "timezone": {
+              "offset": "+3:30",
+              "description": "Tehran"
+            }
+          },
+          "email": "stella.fimreite@example.com",
+          "login": {
+            "uuid": "e309133f-c4cc-4898-bc4e-e757a81ac3d9",
+            "username": "tinywolf518",
+            "password": "coolman",
+            "salt": "sVWGMIEX",
+            "md5": "85dd6d7234f4b2b71a6d135932cca342",
+            "sha1": "1d40cdebfa202fa38102254004f1ad7b29f74f93",
+            "sha256": "7f8c4cf7054433b15876bcd6bb1b7654cf18f9b2436c9ab2a49b08cebdd6561a"
+          },
+          "dob": {
+            "date": "1961-10-10T11:56:31Z",
+            "age": 57
+          },
+          "registered": {
+            "date": "2009-10-31T03:36:49Z",
+            "age": 9
+          },
+          "phone": "60681862",
+          "cell": "49887318",
+          "id": {
+            "name": "FN",
+            "value": "10106137329"
+          },
+          "picture": {
+            "large": "https://randomuser.me/api/portraits/women/62.jpg",
+            "medium": "https://randomuser.me/api/portraits/med/women/62.jpg",
+            "thumbnail": "https://randomuser.me/api/portraits/thumb/women/62.jpg"
+          },
+          "nat": "NO"
+        }
+      ],
+      "info": {
+        "seed": "6813b6f48d1766e3",
+        "results": 1,
+        "page": 1,
+        "version": "1.2"
+      }
+    }
+  }
+}
