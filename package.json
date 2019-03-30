@@ -20,6 +20,7 @@
     "@types/node-fetch": "^2.1.6",
     "@types/sindresorhus__fnv1a": "^1.0.0",
     "@types/supertest": "^2.0.7",
+    "@types/url-parse": "^1.4.3",
     "express-graphql": "^0.7.1",
     "express-session": "^1.15.6",
     "jest": "^24.5.0",
@@ -47,6 +48,7 @@
     "globby": "^9.0.0",
     "lodash": "^4.17.11",
     "mkdirp": "^0.5.1",
-    "nock": "^10.0.6"
+    "nock": "^10.0.6",
+    "url-parse": "^1.4.4"
   }
 }

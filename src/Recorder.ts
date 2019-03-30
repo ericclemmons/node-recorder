@@ -5,7 +5,7 @@ import * as mkdirp from "mkdirp";
 import * as nock from "nock";
 import * as path from "path";
 import * as zlib from "zlib";
-import * as url from "url";
+import * as URL from "url-parse";
 
 import { Mode } from "./Mode";
 
@@ -21,8 +21,9 @@ enum Methods {
 }
 
 // A more relaxed version of http.ReuestOptions
-interface Options {
-  [key: string]: string;
+interface RequestOptions extends http.RequestOptions {
+  href?: string;
+  proto?: string;
 }
 
 interface RequestFixture {
@@ -48,7 +49,7 @@ interface InterceptedRequest {
   body: string;
   headers: http.IncomingHttpHeaders;
   method: Methods;
-  options: Options;
+  options: RequestOptions;
   req: http.ClientRequest;
   respond: nock.ReplyCallback;
 }
@@ -72,7 +73,7 @@ export class Recorder {
 
   getFixturePath(request: RequestFixture): string {
     const { href } = request;
-    const { hostname, pathname } = url.parse(request.href);
+    const { hostname, pathname } = URL(request.href);
 
     if (!hostname) {
       console.error(request);
@@ -98,6 +99,33 @@ export class Recorder {
     );
 
     return fixturePath;
+  }
+
+  getHrefFromOptions(options: RequestOptions) {
+    if (options.href) {
+      return options.href;
+    }
+
+    const protocol = options.protocol || `${options.proto}:` || "http:";
+    const host = options.hostname || options.host || "localhost";
+    const { path, port } = options;
+
+    const url = new URL("");
+
+    url.set("protocol", protocol);
+    url.set("host", host);
+    url.set("pathname", path);
+
+    if (
+      port &&
+      !host.includes(":") &&
+      (port !== 80 || protocol !== "http:") &&
+      (port !== 443 || protocol !== "https:")
+    ) {
+      url.set("port", port);
+    }
+
+    return url.href;
   }
 
   handleRequest = (interceptedRequest: InterceptedRequest) => {
@@ -213,12 +241,12 @@ export class Recorder {
 
   normalize(request: InterceptedRequest, response?: ResponseFixture) {
     const { body, headers, method, options } = request;
-    const { href } = url.parse(options.href);
+    const href = this.getHrefFromOptions(options);
 
     // TODO Allow `recorder.configure` to customize this:
     // https://netflix.github.io/pollyjs/#/configuration?id=defaults
     return {
-      request: { method, href: href as string, headers, body },
+      request: { method, href, headers, body },
       response
     };
   }
