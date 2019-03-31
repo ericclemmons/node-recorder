@@ -33,7 +33,6 @@ interface RequestFixture {
   href: string;
   method: Methods;
   headers: http.IncomingHttpHeaders;
-  // url: UrlWithParsedQuery;
 }
 
 interface ResponseFixture {
