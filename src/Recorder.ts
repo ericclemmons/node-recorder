@@ -55,10 +55,12 @@ interface InterceptedRequest {
   respond: nock.ReplyCallback;
 }
 
+const { RECORDER_MODE = Mode.RECORD } = process.env;
+
 export class Recorder {
   httpRequest = http.request;
   httpsRequest = https.request;
-  mode: Mode = Mode.IGNORE;
+  mode: Mode = RECORDER_MODE as Mode;
 
   constructor() {
     this.setupNock();
