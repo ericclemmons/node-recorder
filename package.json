@@ -34,7 +34,7 @@
     "ts-node": "^8.0.2",
     "tsconfig-paths": "^3.8.0",
     "typegql": "^0.6.1",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.4.1"
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
@@ -44,7 +44,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@sindresorhus/fnv1a": "^1.0.0",
+    "@sindresorhus/fnv1a": "^1.1.0",
     "globby": "^9.0.0",
     "lodash": "^4.17.11",
     "mkdirp": "^0.5.1",
