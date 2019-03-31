@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "GET",
+    "href": "http://127.0.0.1/api",
+    "headers": {
+      "accept-encoding": "gzip, deflate",
+      "user-agent": "node-superagent/3.8.3"
+    },
+    "body": ""
+  },
+  "response": {
+    "statusCode": 403,
+    "headers": {
+      "x-powered-by": "Express",
+      "content-type": "text/plain; charset=utf-8",
+      "content-length": "9",
+      "etag": "W/\"9-PatfYBLj4Um1qTm5zrukoLhNyPU\"",
+      "date": "Sun, 31 Mar 2019 05:33:02 GMT",
+      "connection": "close"
+    },
+    "body": "Forbidden"
+  }
+}

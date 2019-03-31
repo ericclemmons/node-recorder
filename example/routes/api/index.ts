@@ -21,7 +21,7 @@ const oauth = (
   } = req.query;
 
   if (!access_token) {
-    return res.send(403);
+    return res.sendStatus(403);
   }
 
   const decipher = createDecipher("aes256", "password");

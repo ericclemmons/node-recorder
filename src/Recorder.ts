@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
+import { cloneDeep } from "lodash";
 import * as mkdirp from "mkdirp";
 import * as nock from "nock";
 import * as path from "path";
@@ -65,7 +66,7 @@ export class Recorder {
   }
 
   getFixture = (interceptedRequest: InterceptedRequest): Fixture => {
-    const { request } = this.normalize(interceptedRequest);
+    const { request } = this.normalize(interceptedRequest) as Fixture;
     const fixturePath = this.getFixturePath(request);
 
     return JSON.parse(fs.readFileSync(fixturePath, "utf8"));
@@ -76,20 +77,19 @@ export class Recorder {
     const { hostname, pathname } = URL(request.href);
 
     if (!hostname) {
-      console.error(request);
       throw new Error(
         `Cannot parse hostname from fixture's "href": ${JSON.stringify(href)}`
       );
     }
 
     if (!pathname) {
-      console.error(request);
       throw new Error(
         `Cannot parse pathname from fixture's "href": ${JSON.stringify(href)}`
       );
     }
 
     const hash = fnv1a(JSON.stringify(request));
+
     const fixturePath = path.join(
       process.cwd(),
       "__fixtures__",
@@ -243,12 +243,28 @@ export class Recorder {
     const { body, headers, method, options } = request;
     const href = this.getHrefFromOptions(options);
 
-    // TODO Allow `recorder.configure` to customize this:
-    // https://netflix.github.io/pollyjs/#/configuration?id=defaults
-    return {
+    const fixture = cloneDeep({
       request: { method, href, headers, body },
       response
-    };
+    });
+
+    // TODO This is redundant with `href`, so why should we keep it?
+    delete fixture.request.headers.host;
+
+    // TODO Move this into an array with custom normalizers
+    const userAgent = fixture.request.headers["user-agent"];
+
+    if (userAgent && userAgent.startsWith("node-superagent")) {
+      const url = new URL(fixture.request.href);
+
+      url.set("port", undefined);
+
+      fixture.request.href = url.href;
+    }
+
+    // TODO Allow `recorder.configure` to customize this:
+    // https://netflix.github.io/pollyjs/#/configuration?id=defaults
+    return fixture;
   }
 
   record() {
@@ -259,6 +275,7 @@ export class Recorder {
     const { respond } = request;
 
     try {
+      // TODO hasFixture
       const fixture = this.getFixture(request);
       const { statusCode, body, headers } = fixture.response;
       console.log("Replaying", fixture.request.href);
@@ -297,7 +314,7 @@ export class Recorder {
     const response = await this.makeRequest(request);
     const fixture = this.normalize(request, response) as Fixture;
 
-    this.saveFixture(fixture);
+    process.nextTick(() => this.saveFixture(fixture));
 
     const { statusCode, body, headers } = fixture.response;
 
@@ -326,6 +343,13 @@ export class Recorder {
     const serialized = JSON.stringify(fixture, null, 2);
 
     console.log("Saving", fixturePath);
+
+    // TODO Should this throw if we try to write it twice on 1 pass?
+    if (fs.existsSync(fixturePath)) {
+      console.warn(`Fixture already exists: ${fixturePath}`);
+      return;
+    }
+
     mkdirp.sync(path.dirname(fixturePath));
     fs.writeFileSync(fixturePath, serialized);
   }

@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "GET",
+    "href": "http://127.0.0.1/api?access_token=8d20f9ef8ecfec2d80f726b85fbb62ae287907ae7396751909408ed7a2f52da0",
+    "headers": {
+      "accept-encoding": "gzip, deflate",
+      "user-agent": "node-superagent/3.8.3"
+    },
+    "body": ""
+  },
+  "response": {
+    "statusCode": 200,
+    "headers": {
+      "x-powered-by": "Express",
+      "content-type": "application/json; charset=utf-8",
+      "content-length": "22",
+      "etag": "W/\"16-sJz8uwjdDv0wvm7//BYdNw8vMbU\"",
+      "date": "Sun, 31 Mar 2019 05:33:02 GMT",
+      "connection": "close"
+    },
+    "body": "{\"authenticated\":true}"
+  }
+}
