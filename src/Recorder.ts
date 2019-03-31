@@ -58,6 +58,7 @@ interface InterceptedRequest {
 const { RECORDER_MODE = Mode.RECORD } = process.env;
 
 export class Recorder {
+  fixturesPath = path.resolve(process.cwd(), "__fixtures__");
   httpRequest = http.request;
   httpsRequest = https.request;
   mode: Mode = RECORDER_MODE as Mode;
@@ -93,8 +94,7 @@ export class Recorder {
     const hash = fnv1a(JSON.stringify(request));
 
     const fixturePath = path.join(
-      process.cwd(),
-      "__fixtures__",
+      this.fixturesPath,
       hostname,
       pathname,
       `${hash}.json`
