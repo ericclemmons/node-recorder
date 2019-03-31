@@ -42,6 +42,7 @@
     "dev": "cd example && polydev -r ts-node/register -r tsconfig-paths/register",
     "prerelease": "$_ build",
     "release": "np",
+    "pretest": "$_ build",
     "test": "jest"
   },
   "dependencies": {

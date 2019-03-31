@@ -1,10 +1,7 @@
-import { recorder } from "back-to-the-fixture";
 import { resolve } from "path";
 // @ts-ignore
 import { polydev } from "polydev";
 import * as request from "supertest";
-
-recorder.replay();
 
 const app = polydev({
   routes: resolve(__dirname, "../routes")
