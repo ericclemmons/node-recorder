@@ -11,9 +11,12 @@ export default express()
     })
   )
   .use((req, res, next) => {
-    const cookie = req.get("cookie");
+    const cookie = req.get("cookie") || "";
 
-    if (!cookie && req.path !== "/login") {
+    if (
+      !cookie.includes("back-to-the-fixture-example") &&
+      req.path !== "/login"
+    ) {
       return res.status(403).send(`<a href="/login">Login</a>`);
     }
 
