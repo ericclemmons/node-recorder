@@ -8,6 +8,7 @@ import * as path from "path";
 import * as zlib from "zlib";
 import * as URL from "url-parse";
 
+import { log } from "./log";
 import { Mode } from "./Mode";
 
 const fnv1a = require("@sindresorhus/fnv1a");
@@ -278,7 +279,7 @@ export class Recorder {
       // TODO hasFixture
       const fixture = this.getFixture(request);
       const { statusCode, body, headers } = fixture.response;
-      console.log("Replaying", fixture.request.href);
+      log("Replaying fixture %o", fixture.request.href);
 
       return respond(null, [statusCode, body, headers]);
     } catch (error) {
@@ -342,13 +343,7 @@ export class Recorder {
     const fixturePath = this.getFixturePath(fixture.request);
     const serialized = JSON.stringify(fixture, null, 2);
 
-    console.log("Saving", fixturePath);
-
-    // TODO Should this throw if we try to write it twice on 1 pass?
-    if (fs.existsSync(fixturePath)) {
-      console.warn(`Fixture already exists: ${fixturePath}`);
-      return;
-    }
+    log("Saving fixture %o", fixturePath);
 
     mkdirp.sync(path.dirname(fixturePath));
     fs.writeFileSync(fixturePath, serialized);
