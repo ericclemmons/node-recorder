@@ -9,5 +9,7 @@ module.exports = merge(
     testEnvironment: "node"
   },
   require("ts-jest/jest-preset"),
+
+  // @ts-ignore
   require("./dist/jest-preset")
 );
