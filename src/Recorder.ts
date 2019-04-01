@@ -98,8 +98,11 @@ export class Recorder {
 
   constructor() {
     this.loadConfig();
-    this.setupNock();
-    this.patchNock();
+
+    if (!nock.isActive()) {
+      this.setupNock();
+      this.patchNock();
+    }
   }
 
   configure = (config: Config) => {
