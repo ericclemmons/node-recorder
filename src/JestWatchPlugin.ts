@@ -1,5 +1,9 @@
+import debug from "debug";
+
 import { Mode, recorder } from "./index";
 import { log } from "./log";
+
+debug.enable("back-to-the-fixture");
 
 module.exports = class JestWatchPLugin {
   changeMode() {
