@@ -1,3 +1,4 @@
+import * as cosmiconfig from "cosmiconfig";
 import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
@@ -16,6 +17,15 @@ const fnv1a = require("@sindresorhus/fnv1a");
 const REQUEST_ARGUMENTS = new WeakMap();
 
 nock.restore();
+
+interface Config {
+  fixturesPath: string;
+  normalizers: Normalizer[];
+}
+
+interface Normalizer {
+  (request: RequestFixture, response?: ResponseFixture): void;
+}
 
 enum Methods {
   GET = "GET",
@@ -57,16 +67,52 @@ interface InterceptedRequest {
 
 const { RECORDER_MODE = Mode.RECORD } = process.env;
 
+const explorer = cosmiconfig("recorder", {
+  searchPlaces: ["recorder.config.js"]
+});
+
 export class Recorder {
   fixturesPath = path.resolve(process.cwd(), "__fixtures__");
   httpRequest = http.request;
   httpsRequest = https.request;
   mode: Mode = RECORDER_MODE as Mode;
+  normalizers: Normalizer[] = [
+    function removeRedudantHostHeader(request) {
+      // TODO This is redundant with `href`, so why should we keep it?
+      delete request.headers.host;
+    },
+
+    function ignoreSuperAgent(request) {
+      // TODO Move this into an array with custom normalizers
+      const userAgent = request.headers["user-agent"];
+
+      if (userAgent && userAgent.startsWith("node-superagent")) {
+        const url = new URL(request.href);
+
+        url.set("port", undefined);
+
+        request.href = url.href;
+      }
+    }
+  ];
 
   constructor() {
+    this.loadConfig();
     this.setupNock();
     this.patchNock();
   }
+
+  configure = (config: Config) => {
+    if (config.fixturesPath) {
+      this.fixturesPath = config.fixturesPath;
+    }
+
+    if (config.normalizers) {
+      config.normalizers.forEach((normalizer) => {
+        this.normalizers.push(normalizer);
+      });
+    }
+  };
 
   getFixture = (interceptedRequest: InterceptedRequest): Fixture => {
     const { request } = this.normalize(interceptedRequest) as Fixture;
@@ -174,6 +220,14 @@ export class Recorder {
     respond(null, [statusCode, body, headers]);
   }
 
+  loadConfig() {
+    const result = explorer.searchSync();
+
+    if (result && result.config) {
+      this.configure(result.config as Config);
+    }
+  }
+
   async makeRequest(
     interceptedRequest: InterceptedRequest
   ): Promise<ResponseFixture> {
@@ -250,22 +304,10 @@ export class Recorder {
       response
     });
 
-    // TODO This is redundant with `href`, so why should we keep it?
-    delete fixture.request.headers.host;
+    this.normalizers.forEach((normalizer) => {
+      normalizer(fixture.request, fixture.response);
+    });
 
-    // TODO Move this into an array with custom normalizers
-    const userAgent = fixture.request.headers["user-agent"];
-
-    if (userAgent && userAgent.startsWith("node-superagent")) {
-      const url = new URL(fixture.request.href);
-
-      url.set("port", undefined);
-
-      fixture.request.href = url.href;
-    }
-
-    // TODO Allow `recorder.configure` to customize this:
-    // https://netflix.github.io/pollyjs/#/configuration?id=defaults
     return fixture;
   }
 
