@@ -1,5 +1,4 @@
 const { merge } = require("lodash");
-console.log(require("ts-jest/jest-preset"));
 
 module.exports = merge(
   {
