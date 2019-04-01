@@ -2,7 +2,6 @@ import * as cosmiconfig from "cosmiconfig";
 import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
-import { cloneDeep } from "lodash";
 import * as mkdirp from "mkdirp";
 import * as nock from "nock";
 import * as path from "path";
@@ -23,8 +22,12 @@ interface Config {
   normalizers: Normalizer[];
 }
 
+interface NormalizedRequest extends RequestFixture {
+  url: URL;
+}
+
 interface Normalizer {
-  (request: RequestFixture, response?: ResponseFixture): void;
+  (request: NormalizedRequest, response?: ResponseFixture): void;
 }
 
 enum Methods {
@@ -76,25 +79,7 @@ export class Recorder {
   httpRequest = http.request;
   httpsRequest = https.request;
   mode: Mode = RECORDER_MODE as Mode;
-  normalizers: Normalizer[] = [
-    function removeRedudantHostHeader(request) {
-      // TODO This is redundant with `href`, so why should we keep it?
-      delete request.headers.host;
-    },
-
-    function ignoreSuperAgent(request) {
-      // TODO Move this into an array with custom normalizers
-      const userAgent = request.headers["user-agent"];
-
-      if (userAgent && userAgent.startsWith("node-superagent")) {
-        const url = new URL(request.href);
-
-        url.set("port", undefined);
-
-        request.href = url.href;
-      }
-    }
-  ];
+  normalizers: Normalizer[] = [];
 
   constructor() {
     this.loadConfig();
@@ -106,15 +91,7 @@ export class Recorder {
   }
 
   configure = (config: Config) => {
-    if (config.fixturesPath) {
-      this.fixturesPath = config.fixturesPath;
-    }
-
-    if (config.normalizers) {
-      config.normalizers.forEach((normalizer) => {
-        this.normalizers.push(normalizer);
-      });
-    }
+    Object.assign(this, config);
   };
 
   getFixture = (interceptedRequest: InterceptedRequest): Fixture => {
@@ -126,7 +103,7 @@ export class Recorder {
 
   getFixturePath(request: RequestFixture): string {
     const { href } = request;
-    const { hostname, pathname } = URL(request.href);
+    const { hostname, pathname } = new URL(request.href, true);
 
     if (!hostname) {
       throw new Error(
@@ -161,7 +138,7 @@ export class Recorder {
     const host = options.hostname || options.host || "localhost";
     const { path, port } = options;
 
-    const url = new URL("");
+    const url = new URL("", true);
 
     url.set("protocol", protocol);
     url.set("host", host);
@@ -261,6 +238,7 @@ export class Recorder {
       response.once("end", () => {
         const { headers } = response;
 
+        // GitHub sends compressed, chunked payloads
         if (
           headers["content-encoding"] === "gzip" &&
           headers["transfer-encoding"] === "chunked"
@@ -277,15 +255,29 @@ export class Recorder {
 
             // TODO Is this safe to assume?
             headers["content-encoding"] = "application/json";
-            resolve(json);
+            return resolve(json);
           } catch (error) {
-            resolve(unzipped);
+            return resolve(unzipped);
           }
 
-          resolve(unzipped);
-        } else {
-          resolve(Buffer.concat(chunks).toString("utf8"));
+          return resolve(unzipped);
         }
+
+        const body = Buffer.concat(chunks).toString("utf8");
+
+        // Simple services oftent send "application/json; charset=utf-8"
+        if (
+          headers["content-type"] &&
+          headers["content-type"].startsWith("application/json")
+        ) {
+          try {
+            return resolve(JSON.parse(body));
+          } catch (error) {
+            console.warn(error);
+          }
+        }
+
+        return resolve(body);
       });
 
       response.once("error", reject);
@@ -302,14 +294,37 @@ export class Recorder {
     const { body, headers, method, options } = request;
     const href = this.getHrefFromOptions(options);
 
-    const fixture = cloneDeep({
-      request: { method, href, headers, body },
+    // fThis is redundant with `href`, so why should we keep it?
+    delete request.headers.host;
+
+    const url = new URL(href, true);
+
+    // Remove ephemeral ports from superagent testing
+    if (
+      headers["user-agent"] &&
+      headers["user-agent"].startsWith("node-superagent")
+    ) {
+      url.set("port", undefined);
+    }
+
+    const fixture = {
+      request: {
+        // Poor-man's clone for immutability
+        ...JSON.parse(JSON.stringify({ method, href, headers, body })),
+        url
+      },
       response
-    });
+    };
 
     this.normalizers.forEach((normalizer) => {
       normalizer(fixture.request, fixture.response);
     });
+
+    // Update href to match url object
+    fixture.request.href = fixture.request.url.toString();
+
+    // Don't save parsed url
+    delete fixture.request.url;
 
     return fixture;
   }
@@ -329,11 +344,8 @@ export class Recorder {
 
       return respond(null, [statusCode, body, headers]);
     } catch (error) {
-      // TODO Better messaging we're recording
-      console.error(error);
+      return this.rerecordRequest(request);
     }
-
-    return this.rerecordRequest(request);
   }
 
   replay() {
@@ -359,13 +371,13 @@ export class Recorder {
   async rerecordRequest(request: InterceptedRequest) {
     const { respond } = request;
     const response = await this.makeRequest(request);
-    const fixture = this.normalize(request, response) as Fixture;
+    const { statusCode, body, headers } = response;
 
-    process.nextTick(() => this.saveFixture(fixture));
-
-    const { statusCode, body, headers } = fixture.response;
-
+    // Respond with *real* response for recording, not fixture.
     respond(null, [statusCode, body, headers]);
+
+    const fixture = this.normalize(request, response) as Fixture;
+    process.nextTick(() => this.saveFixture(fixture));
   }
 
   patchNock() {
@@ -389,7 +401,7 @@ export class Recorder {
     const fixturePath = this.getFixturePath(fixture.request);
     const serialized = JSON.stringify(fixture, null, 2);
 
-    log("Saving fixture %o", fixturePath);
+    log("Recording fixture %o", fixturePath);
 
     mkdirp.sync(path.dirname(fixturePath));
     fs.writeFileSync(fixturePath, serialized);

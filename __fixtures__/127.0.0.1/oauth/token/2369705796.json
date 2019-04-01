@@ -15,9 +15,11 @@
       "content-type": "application/json; charset=utf-8",
       "content-length": "83",
       "etag": "W/\"53-0GfNWhqT0Y8acVKmdcCQZGMwLno\"",
-      "date": "Sun, 31 Mar 2019 05:33:02 GMT",
+      "date": "Mon, 01 Apr 2019 04:49:38 GMT",
       "connection": "close"
     },
-    "body": "{\"access_token\":\"8d20f9ef8ecfec2d80f726b85fbb62ae287907ae7396751909408ed7a2f52da0\"}"
+    "body": {
+      "access_token": "FAKE_ACCESS_TOKEN"
+    }
   }
 }

@@ -1,10 +1,11 @@
 {
   "request": {
     "method": "GET",
-    "href": "http://127.0.0.1/api?access_token=8d20f9ef8ecfec2d80f726b85fbb62ae287907ae7396751909408ed7a2f52da0",
+    "href": "http://127.0.0.1/api",
     "headers": {
       "accept-encoding": "gzip, deflate",
-      "user-agent": "node-superagent/3.8.3"
+      "user-agent": "node-superagent/3.8.3",
+      "authorization": "Bearer FAKE_ACCESS_TOKEN"
     },
     "body": ""
   },
@@ -15,9 +16,11 @@
       "content-type": "application/json; charset=utf-8",
       "content-length": "22",
       "etag": "W/\"16-sJz8uwjdDv0wvm7//BYdNw8vMbU\"",
-      "date": "Sun, 31 Mar 2019 05:33:02 GMT",
+      "date": "Mon, 01 Apr 2019 04:49:38 GMT",
       "connection": "close"
     },
-    "body": "{\"authenticated\":true}"
+    "body": {
+      "authenticated": true
+    }
   }
 }
