@@ -42,16 +42,16 @@ interface RequestOptions extends http.RequestOptions {
 }
 
 interface RequestFixture {
-  body: string;
-  href: string;
   method: Methods;
+  href: string;
   headers: http.IncomingHttpHeaders;
+  body: string;
 }
 
 interface ResponseFixture {
-  body: object | string;
   statusCode: number;
   headers: http.IncomingHttpHeaders;
+  body: object | string;
 }
 
 interface Fixture {
