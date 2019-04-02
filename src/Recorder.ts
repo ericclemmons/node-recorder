@@ -290,14 +290,18 @@ export class Recorder {
     };
   }
 
-  normalize(request: InterceptedRequest, response?: ResponseFixture) {
+  normalize(
+    interceptedRequest: InterceptedRequest,
+    response?: ResponseFixture
+  ) {
+    // Poor-man's clone for immutability
+    const request = JSON.parse(JSON.stringify(interceptedRequest));
     const { body, headers, method, options } = request;
     const href = this.getHrefFromOptions(options);
+    const url = new URL(href, true);
 
     // fThis is redundant with `href`, so why should we keep it?
     delete request.headers.host;
-
-    const url = new URL(href, true);
 
     // Remove ephemeral ports from superagent testing
     if (
@@ -308,11 +312,7 @@ export class Recorder {
     }
 
     const fixture = {
-      request: {
-        // Poor-man's clone for immutability
-        ...JSON.parse(JSON.stringify({ method, href, headers, body })),
-        url
-      },
+      request: { method, href, headers, body, url },
       response
     };
 
