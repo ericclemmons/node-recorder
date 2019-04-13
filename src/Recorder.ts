@@ -88,14 +88,14 @@ export class Recorder {
     // @ts-ignore
     if (this.ClientRequest[IS_STUBBED]) {
       log(
-        "The recorder has already stubbed nock. There are multiple versions running!"
+        "back-to-the-fixture has already stubbed nock, so there are multiple versions running!"
       );
 
       return;
     }
 
     if (process.env.RECORDER_ACTIVE) {
-      console.warn("back-to-the-fixture already active");
+      log("back-to-the-fixture already active");
       return;
     }
 
@@ -117,6 +117,8 @@ export class Recorder {
 
     this.setupNock();
     this.patchNock();
+
+    process.env.RECORDER_ACTIVE = "true";
   }
 
   configure = (config: Config) => {
