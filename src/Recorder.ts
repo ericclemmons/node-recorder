@@ -1,3 +1,4 @@
+import * as boxen from "boxen";
 import * as cosmiconfig from "cosmiconfig";
 import * as fs from "fs";
 import * as http from "http";
@@ -11,6 +12,7 @@ import { log } from "./log";
 import { Mode } from "./Mode";
 
 const fnv1a = require("@sindresorhus/fnv1a");
+const chalk = require("chalk");
 
 // Cannot use `Symbol` here, since it's referentially different
 // between the dist/ & src/ versions.
@@ -18,8 +20,9 @@ const IS_STUBBED = "IS_STUBBED";
 const REQUEST_ARGUMENTS = new WeakMap();
 
 interface Config {
-  fixturesPath: string;
-  normalizers: Normalizer[];
+  mode?: Mode;
+  fixturesPath?: string;
+  normalizers?: Normalizer[];
 }
 
 interface NormalizedRequest extends RequestFixture {
@@ -68,8 +71,6 @@ interface InterceptedRequest {
   respond: nock.ReplyCallback;
 }
 
-const { RECORDER_MODE = Mode.RECORD } = process.env;
-
 const explorer = cosmiconfig("recorder", {
   searchPlaces: ["recorder.config.js"]
 });
@@ -80,7 +81,7 @@ nock.restore();
 export class Recorder {
   ClientRequest = http.ClientRequest;
   fixturesPath = path.resolve(process.cwd(), "__fixtures__");
-  mode: Mode = RECORDER_MODE as Mode;
+  mode?: Mode;
   normalizers: Normalizer[] = [];
 
   constructor() {
@@ -93,13 +94,51 @@ export class Recorder {
       return;
     }
 
-    this.loadConfig();
+    if (process.env.RECORDER_ACTIVE) {
+      console.warn("back-to-the-fixture already active");
+      return;
+    }
+
+    const result = explorer.searchSync();
+
+    if (result && result.config) {
+      this.configure(result.config as Config);
+    }
+
+    if (!this.mode) {
+      const {
+        CI,
+        // Default to REPLAY in CI, RECORD otherwise
+        RECORDER_MODE = CI ? Mode.REPLAY : Mode.RECORD
+      } = process.env;
+
+      this.configure({ mode: RECORDER_MODE as Mode });
+    }
+
     this.setupNock();
     this.patchNock();
   }
 
   configure = (config: Config) => {
     Object.assign(this, config);
+
+    if ("mode" in config) {
+      const key = Object.keys(Mode).find(
+        (key) => Mode[key as keyof typeof Mode] === this.mode
+      );
+
+      const message = `${chalk.underline("back-to-the-fixture")}\n${key}`;
+
+      console.log(
+        boxen(message, {
+          align: "center",
+          borderStyle: boxen.BorderStyle.Round,
+          dimBorder: true,
+          margin: 1,
+          padding: 1
+        })
+      );
+    }
   };
 
   getFixture = (interceptedRequest: InterceptedRequest): Fixture => {
@@ -196,7 +235,7 @@ export class Recorder {
   };
 
   ignore() {
-    this.mode = Mode.IGNORE;
+    this.configure({ mode: Mode.IGNORE });
   }
 
   async ignoreRequest(interceptedRequest: InterceptedRequest) {
@@ -206,14 +245,6 @@ export class Recorder {
     );
 
     respond(null, [statusCode, body, headers]);
-  }
-
-  loadConfig() {
-    const result = explorer.searchSync();
-
-    if (result && result.config) {
-      this.configure(result.config as Config);
-    }
   }
 
   async makeRequest(
@@ -336,7 +367,7 @@ export class Recorder {
   }
 
   record() {
-    this.mode = Mode.RECORD;
+    this.configure({ mode: Mode.RECORD });
   }
 
   async recordRequest(request: InterceptedRequest) {
@@ -355,7 +386,7 @@ export class Recorder {
   }
 
   replay() {
-    this.mode = Mode.REPLAY;
+    this.configure({ mode: Mode.REPLAY });
   }
 
   async replayRequest(interceptedRequest: InterceptedRequest) {
@@ -371,7 +402,7 @@ export class Recorder {
   }
 
   rerecord() {
-    this.mode = Mode.RERECORD;
+    this.configure({ mode: Mode.RERECORD });
   }
 
   async rerecordRequest(request: InterceptedRequest) {

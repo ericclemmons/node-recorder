@@ -48,6 +48,8 @@
   },
   "dependencies": {
     "@sindresorhus/fnv1a": "^1.1.0",
+    "boxen": "^3.1.0",
+    "chalk": "^2.4.2",
     "cosmiconfig": "^5.2.0",
     "debug": "^4.1.1",
     "globby": "^9.0.0",
