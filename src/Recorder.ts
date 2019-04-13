@@ -1,7 +1,6 @@
 import * as cosmiconfig from "cosmiconfig";
 import * as fs from "fs";
 import * as http from "http";
-import * as https from "https";
 import * as mkdirp from "mkdirp";
 import * as nock from "nock";
 import * as path from "path";
@@ -13,9 +12,10 @@ import { Mode } from "./Mode";
 
 const fnv1a = require("@sindresorhus/fnv1a");
 
+// Cannot use `Symbol` here, since it's referentially different
+// between the dist/ & src/ versions.
+const IS_STUBBED = "IS_STUBBED";
 const REQUEST_ARGUMENTS = new WeakMap();
-
-nock.restore();
 
 interface Config {
   fixturesPath: string;
@@ -74,20 +74,28 @@ const explorer = cosmiconfig("recorder", {
   searchPlaces: ["recorder.config.js"]
 });
 
+// ! nock overrides http methods upon require. Restore to normal before starting.
+nock.restore();
+
 export class Recorder {
+  ClientRequest = http.ClientRequest;
   fixturesPath = path.resolve(process.cwd(), "__fixtures__");
-  httpRequest = http.request;
-  httpsRequest = https.request;
   mode: Mode = RECORDER_MODE as Mode;
   normalizers: Normalizer[] = [];
 
   constructor() {
-    this.loadConfig();
+    // @ts-ignore
+    if (this.ClientRequest[IS_STUBBED]) {
+      log(
+        "The recorder has already stubbed nock. There are multiple versions running!"
+      );
 
-    if (!nock.isActive()) {
-      this.setupNock();
-      this.patchNock();
+      return;
     }
+
+    this.loadConfig();
+    this.setupNock();
+    this.patchNock();
   }
 
   configure = (config: Config) => {
@@ -213,9 +221,7 @@ export class Recorder {
   ): Promise<ResponseFixture> {
     const { body, headers, method, options } = interceptedRequest;
 
-    const request = (options.proto === "https"
-      ? this.httpsRequest
-      : this.httpRequest)({
+    const request = new this.ClientRequest({
       ...options,
       method,
       headers
@@ -395,6 +401,10 @@ export class Recorder {
 
       return req;
     };
+
+    // We need a way to tell that we've already overridden nock.
+    // @ts-ignore
+    http.ClientRequest[IS_STUBBED] = true;
   }
 
   saveFixture(fixture: Fixture) {
@@ -408,6 +418,7 @@ export class Recorder {
   }
 
   setupNock() {
+    nock.restore();
     nock.cleanAll();
 
     const interceptor = nock(/.*/).persist();

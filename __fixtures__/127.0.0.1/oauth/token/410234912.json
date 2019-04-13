@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "href": "http://127.0.0.1/api?access_token=FAKE_ACCESS_TOKEN",
+    "href": "http://127.0.0.1/oauth/token?username=test%40example.com",
     "headers": {
       "accept-encoding": "gzip, deflate",
       "user-agent": "node-superagent/3.8.3"
@@ -13,13 +13,13 @@
     "headers": {
       "x-powered-by": "Express",
       "content-type": "application/json; charset=utf-8",
-      "content-length": "22",
-      "etag": "W/\"16-sJz8uwjdDv0wvm7//BYdNw8vMbU\"",
-      "date": "Mon, 01 Apr 2019 04:49:38 GMT",
+      "content-length": "147",
+      "etag": "W/\"93-Axu7ipmGYMmLy0CC9YOW/tmGVVw\"",
+      "date": "Sat, 13 Apr 2019 05:20:53 GMT",
       "connection": "close"
     },
     "body": {
-      "authenticated": true
+      "access_token": "8d20f9ef8ecfec2d80f726b85fbb62ae17598cfeac86ce4846939dac1487aea8e29297ed05d073db5aed72afad67d8158dc4a6c7e8e290519d33ab7d93b37728"
     }
   }
 }

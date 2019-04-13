@@ -5,7 +5,7 @@
     "headers": {
       "accept-encoding": "gzip, deflate",
       "user-agent": "node-superagent/3.8.3",
-      "authorization": "Bearer FAKE_ACCESS_TOKEN"
+      "authorization": "Bearer 8d20f9ef8ecfec2d80f726b85fbb62ae17598cfeac86ce4846939dac1487aea8e29297ed05d073db5aed72afad67d8158dc4a6c7e8e290519d33ab7d93b37728"
     },
     "body": ""
   },
@@ -14,13 +14,14 @@
     "headers": {
       "x-powered-by": "Express",
       "content-type": "application/json; charset=utf-8",
-      "content-length": "22",
-      "etag": "W/\"16-sJz8uwjdDv0wvm7//BYdNw8vMbU\"",
-      "date": "Mon, 01 Apr 2019 04:49:38 GMT",
+      "content-length": "52",
+      "etag": "W/\"34-oaLBS5H0STrwNmjp5q8qcqCpp10\"",
+      "date": "Sat, 13 Apr 2019 05:20:53 GMT",
       "connection": "close"
     },
     "body": {
-      "authenticated": true
+      "authenticated": true,
+      "username": "test@example.com"
     }
   }
 }

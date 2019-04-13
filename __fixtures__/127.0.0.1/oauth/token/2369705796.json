@@ -9,17 +9,15 @@
     "body": ""
   },
   "response": {
-    "statusCode": 200,
+    "statusCode": 400,
     "headers": {
       "x-powered-by": "Express",
-      "content-type": "application/json; charset=utf-8",
-      "content-length": "83",
-      "etag": "W/\"53-0GfNWhqT0Y8acVKmdcCQZGMwLno\"",
-      "date": "Mon, 01 Apr 2019 04:49:38 GMT",
+      "content-type": "text/html; charset=utf-8",
+      "content-length": "17",
+      "etag": "W/\"11-LCdia//YhlnzNx0TsVDIEOAW8+E\"",
+      "date": "Sat, 13 Apr 2019 05:20:53 GMT",
       "connection": "close"
     },
-    "body": {
-      "access_token": "FAKE_ACCESS_TOKEN"
-    }
+    "body": "Missing ?username"
   }
 }
