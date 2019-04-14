@@ -1,0 +1,76 @@
+{
+  "request": {
+    "method": "GET",
+    "href": "https://api.github.com/rate_limit",
+    "headers": {
+      "accept": [
+        "*/*"
+      ],
+      "user-agent": [
+        "node-fetch/1.0 (+https://github.com/bitinn/node-fetch)"
+      ],
+      "accept-encoding": [
+        "gzip,deflate"
+      ],
+      "connection": [
+        "close"
+      ]
+    },
+    "body": ""
+  },
+  "response": {
+    "statusCode": 200,
+    "headers": {
+      "date": "Sun, 14 Apr 2019 22:56:45 GMT",
+      "content-type": "application/json; charset=utf-8",
+      "connection": "close",
+      "server": "GitHub.com",
+      "status": "200 OK",
+      "x-ratelimit-limit": "60",
+      "x-ratelimit-remaining": "57",
+      "x-ratelimit-reset": "1555286205",
+      "cache-control": "no-cache",
+      "x-github-media-type": "github.v3; format=json",
+      "access-control-expose-headers": "ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type",
+      "access-control-allow-origin": "*",
+      "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+      "x-frame-options": "deny",
+      "x-content-type-options": "nosniff",
+      "x-xss-protection": "1; mode=block",
+      "referrer-policy": "origin-when-cross-origin, strict-origin-when-cross-origin",
+      "content-security-policy": "default-src 'none'",
+      "vary": "Accept-Encoding",
+      "x-github-request-id": "781E:2010:5E9264:732F59:5CB3BAAC",
+      "content-encoding": "application/json"
+    },
+    "body": {
+      "resources": {
+        "core": {
+          "limit": 60,
+          "remaining": 57,
+          "reset": 1555286205
+        },
+        "search": {
+          "limit": 10,
+          "remaining": 10,
+          "reset": 1555282665
+        },
+        "graphql": {
+          "limit": 0,
+          "remaining": 0,
+          "reset": 1555286205
+        },
+        "integration_manifest": {
+          "limit": 5000,
+          "remaining": 5000,
+          "reset": 1555286205
+        }
+      },
+      "rate": {
+        "limit": 60,
+        "remaining": 57,
+        "reset": 1555286205
+      }
+    }
+  }
+}

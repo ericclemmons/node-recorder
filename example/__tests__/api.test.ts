@@ -1,7 +1,7 @@
 import { resolve } from "path";
-// @ts-ignore
-import { polydev } from "polydev";
 import * as request from "supertest";
+
+const { polydev } = require("polydev");
 
 const app = polydev({
   routes: resolve(__dirname, "../routes")

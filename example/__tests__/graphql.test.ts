@@ -1,20 +1,7 @@
-// @ts-ignore
-import { polydev } from "polydev";
+import { resolve } from "path";
 import * as request from "supertest";
 
-import { Mode, recorder } from "back-to-the-fixture";
-import { resolve } from "path";
-
-recorder.configure({
-  filter(call) {
-    if (call.scope.includes("127.0.0.1")) {
-      call.reqheaders.host = call.scope = "http://127.0.0.1";
-    }
-
-    return true;
-  },
-  mode: Mode.RECORD
-});
+const { polydev } = require("polydev");
 
 const app = polydev({
   routes: resolve(__dirname, "../routes")
@@ -25,7 +12,7 @@ describe("/login", () => {
     return request
       .agent(app)
       .get("/login")
-      .expect(res => expect(res.get("Set-Cookie")).toHaveLength(1))
+      .expect((res) => expect(res.get("Set-Cookie")).toHaveLength(1))
       .expect(302, "Found. Redirecting to /");
   });
 });
@@ -72,21 +59,21 @@ describe("/graphql", () => {
           }`
         })
         .expect(200)
-        .expect(res => {
+        .expect((res) => {
           expect(res.body).toMatchInlineSnapshot(
             {},
             `
-Object {
-  "data": Object {
-    "github": Object {
-      "rateLimit": Object {
-        "limit": 60,
-        "remaining": 59,
-      },
-    },
-  },
-}
-`
+            Object {
+              "data": Object {
+                "github": Object {
+                  "rateLimit": Object {
+                    "limit": 60,
+                    "remaining": 57,
+                  },
+                },
+              },
+            }
+          `
           );
         });
     });
