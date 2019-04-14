@@ -467,10 +467,8 @@ export class Recorder {
     delete request.headers.host;
 
     // Remove ephemeral ports from superagent testing
-    if (
-      headers["user-agent"] &&
-      headers["user-agent"].startsWith("node-superagent")
-    ) {
+    // ! user-agent can be "..." or ["..."]
+    if (String(headers["user-agent"]).includes("node-superagent")) {
       url.set("port", undefined);
     }
 
