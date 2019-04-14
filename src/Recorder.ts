@@ -122,9 +122,11 @@ export class Recorder {
   }
 
   configure = (config: Config) => {
+    const changedMode = "mode" in config && config.mode !== this.mode;
+
     Object.assign(this, config);
 
-    if ("mode" in config) {
+    if (changedMode) {
       const modeEnum = this.getModeEnum();
 
       const message = [
