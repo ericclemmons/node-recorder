@@ -34,8 +34,14 @@ interface Normalizer {
 }
 
 enum Methods {
+  DELETE = "DELETE",
   GET = "GET",
-  POST = "POST"
+  HEAD = "HEAD",
+  MERGE = "MERGE",
+  OPTIONS = "OPTIONS",
+  PATCH = "PATCH",
+  POST = "POST",
+  PUT = "PUT"
 }
 
 // A more relaxed version of http.ReuestOptions
