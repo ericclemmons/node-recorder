@@ -279,6 +279,12 @@ export class Recorder {
     respond(null, [statusCode, body, headers]);
   };
 
+  hasFixture(interceptedRequest: InterceptedRequest) {
+    const { request } = this.normalize(interceptedRequest) as Fixture;
+
+    return fs.existsSync(this.getFixturePath(request));
+  }
+
   identify(request: RequestFixture, response?: ResponseFixture) {
     if (!this.identifier) {
       return;
@@ -299,7 +305,10 @@ export class Recorder {
       return;
     }
 
-    log(`Custom identifier returned %O for %O`, result, { request, response });
+    log(`Custom identifier returned:\n%O\nfor:\n%O`, result, {
+      request,
+      response
+    });
 
     if (Array.isArray(result)) {
       const [identity, token] = result;
@@ -317,8 +326,10 @@ export class Recorder {
       const identity = this.identities.get(result);
 
       if (!identity) {
-        log("No identities associated with %O", result);
-        return;
+        log("No tokens associated with %O", result);
+
+        // Trust the provided identity, since it may not be a token
+        return result;
       }
 
       return identity;
@@ -465,19 +476,12 @@ export class Recorder {
     this.configure({ mode: Mode.RECORD });
   }
 
-  async recordRequest(request: InterceptedRequest) {
-    const { respond } = request;
-
-    try {
-      // TODO hasFixture
-      const fixture = this.getFixture(request);
-      const { statusCode, body, headers } = fixture.response;
-      log("Replaying fixture %o", fixture.request.href);
-
-      return respond(null, [statusCode, body, headers]);
-    } catch (error) {
-      return this.rerecordRequest(request);
+  async recordRequest(interceptedRequest: InterceptedRequest) {
+    if (this.hasFixture(interceptedRequest)) {
+      return this.replayRequest(interceptedRequest);
     }
+
+    return this.rerecordRequest(interceptedRequest);
   }
 
   replay() {
@@ -489,6 +493,8 @@ export class Recorder {
 
     try {
       const fixture = await this.getFixture(interceptedRequest);
+
+      this.identify(fixture.request, fixture.response);
 
       return this.handleResponse(interceptedRequest, fixture);
     } catch (error) {
@@ -509,6 +515,9 @@ export class Recorder {
     respond(null, [statusCode, body, headers]);
 
     const fixture = this.normalize(request, response) as Fixture;
+
+    this.identify(fixture.request, fixture.response);
+
     process.nextTick(() => this.saveFixture(fixture));
   }
 
@@ -537,7 +546,7 @@ export class Recorder {
     const fixturePath = this.getFixturePath(fixture.request);
     const serialized = JSON.stringify(fixture, null, 2);
 
-    log("Recording fixture %o", fixturePath);
+    log("Recording %O to fixture %O", fixture, fixturePath);
 
     mkdirp.sync(path.dirname(fixturePath));
     fs.writeFileSync(fixturePath, serialized);

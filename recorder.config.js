@@ -1,18 +1,29 @@
 module.exports = {
   identifier(request, response) {
+    const { authorization } = request.headers;
     const { pathname, query } = request.url;
-    const { username } = query;
+    const { access_token, username } = query;
 
-    if (pathname === "/oauth/token" && username && response) {
-      return [username, response.body.access_token];
+    // Identify any calls with `?access_token=...`
+    if (access_token) {
+      return access_token;
     }
 
-    const { authorization } = request.headers;
-
+    // Identify any calls with `Authorization: Bearer ...`
     if (authorization) {
       const [, token] = authorization.split("Bearer ");
 
       return token;
+    }
+
+    if (pathname === "/oauth/token" && username) {
+      // Identify requests by `/oauth/token?username=...`
+      if (!response) {
+        return username;
+      }
+
+      // Associate `{ access_token: ... }` with `?username=...`
+      return [username, response.body.access_token];
     }
   }
 };
