@@ -130,7 +130,6 @@ export class Recorder {
 
     if (process.env.RECORDER_ACTIVE) {
       log("back-to-the-fixture already active");
-      return;
     }
 
     this.setupNock();
