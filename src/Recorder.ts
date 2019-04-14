@@ -100,11 +100,6 @@ export class Recorder {
       return;
     }
 
-    if (process.env.RECORDER_ACTIVE) {
-      log("back-to-the-fixture already active");
-      return;
-    }
-
     const result = explorer.searchSync();
 
     if (result && result.config) {
@@ -119,6 +114,11 @@ export class Recorder {
       } = process.env;
 
       this.configure({ mode: RECORDER_MODE as Mode });
+    }
+
+    if (process.env.RECORDER_ACTIVE) {
+      log("back-to-the-fixture already active");
+      return;
     }
 
     this.setupNock();
