@@ -171,9 +171,11 @@ export class Recorder {
     if (!fs.existsSync(fixturePath)) {
       const relativePath = fixturePath.replace(process.cwd(), ".");
 
-      log(`Missing fixture %O for %O`, relativePath, request);
-
-      throw new Error(`Fixture does not exist: ${relativePath}`);
+      throw new Error(
+        `Expected fixture for ${request.method} ${
+          request.href
+        } at ${relativePath}`
+      );
     }
 
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
@@ -247,18 +249,29 @@ export class Recorder {
 
   handleRequest = (interceptedRequest: InterceptedRequest) => {
     const { mode } = this;
+    const { method, options } = interceptedRequest;
+    const href = this.getHrefFromOptions(options);
 
     switch (mode) {
       case Mode.IGNORE:
+        log(`Ignoring ${method} ${href}`);
         return this.ignoreRequest(interceptedRequest);
 
       case Mode.RECORD:
+        if (this.hasFixture(interceptedRequest)) {
+          log(`Replaying ${method} ${href}`);
+          return this.replayRequest(interceptedRequest);
+        }
+
+        log(`Recording ${method} ${href}`);
         return this.recordRequest(interceptedRequest);
 
       case Mode.RERECORD:
-        return this.rerecordRequest(interceptedRequest);
+        log(`Recording ${method} ${href}`);
+        return this.recordRequest(interceptedRequest);
 
       case Mode.REPLAY:
+        log(`Replaying ${method} ${href}`);
         return this.replayRequest(interceptedRequest);
 
       default:
@@ -305,11 +318,6 @@ export class Recorder {
       return;
     }
 
-    log(`Custom identifier returned:\n%O\nfor:\n%O`, result, {
-      request,
-      response
-    });
-
     if (Array.isArray(result)) {
       const [identity, token] = result;
 
@@ -325,10 +333,8 @@ export class Recorder {
     if (typeof result === "string") {
       const identity = this.identities.get(result);
 
+      // Trust the provided identity, since it may not be a token
       if (!identity) {
-        log("No tokens associated with %O", result);
-
-        // Trust the provided identity, since it may not be a token
         return result;
       }
 
@@ -476,12 +482,19 @@ export class Recorder {
     this.configure({ mode: Mode.RECORD });
   }
 
-  async recordRequest(interceptedRequest: InterceptedRequest) {
-    if (this.hasFixture(interceptedRequest)) {
-      return this.replayRequest(interceptedRequest);
-    }
+  async recordRequest(request: InterceptedRequest) {
+    const { respond } = request;
+    const response = await this.makeRequest(request);
+    const { statusCode, body, headers } = response;
 
-    return this.rerecordRequest(interceptedRequest);
+    // Respond with *real* response for recording, not fixture.
+    respond(null, [statusCode, body, headers]);
+
+    const fixture = this.normalize(request, response) as Fixture;
+
+    this.identify(fixture.request, fixture.response);
+
+    process.nextTick(() => this.saveFixture(fixture));
   }
 
   replay() {
@@ -504,21 +517,6 @@ export class Recorder {
 
   rerecord() {
     this.configure({ mode: Mode.RERECORD });
-  }
-
-  async rerecordRequest(request: InterceptedRequest) {
-    const { respond } = request;
-    const response = await this.makeRequest(request);
-    const { statusCode, body, headers } = response;
-
-    // Respond with *real* response for recording, not fixture.
-    respond(null, [statusCode, body, headers]);
-
-    const fixture = this.normalize(request, response) as Fixture;
-
-    this.identify(fixture.request, fixture.response);
-
-    process.nextTick(() => this.saveFixture(fixture));
   }
 
   patchNock() {
@@ -545,8 +543,6 @@ export class Recorder {
   saveFixture(fixture: Fixture) {
     const fixturePath = this.getFixturePath(fixture.request);
     const serialized = JSON.stringify(fixture, null, 2);
-
-    log("Recording %O to fixture %O", fixture, fixturePath);
 
     mkdirp.sync(path.dirname(fixturePath));
     fs.writeFileSync(fixturePath, serialized);
