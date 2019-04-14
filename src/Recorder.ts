@@ -156,8 +156,9 @@ export class Recorder {
   getFixture = (interceptedRequest: InterceptedRequest): Fixture => {
     const { request } = this.normalize(interceptedRequest) as Fixture;
     const fixturePath = this.getFixturePath(request);
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
-    return JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    return fixture;
   };
 
   getFixturePath(request: RequestFixture): string {
