@@ -5,7 +5,8 @@ const { merge } = require("lodash");
 module.exports = merge(
   {
     moduleNameMapper: {
-      "back-to-the-fixture": "<rootDir>/dist"
+      // ! Don't use this, because Jest messes up polydev's require(...)
+      // "back-to-the-fixture": "<rootDir>/dist"
     },
     testEnvironment: "node"
   },
