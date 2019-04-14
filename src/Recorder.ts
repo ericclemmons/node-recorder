@@ -381,7 +381,16 @@ export class Recorder {
       request.once("timeout", reject);
     });
 
-    request.write(body);
+    // Because we JSON.parse responses, we need to stringify it
+    if (
+      headers["content-type"] &&
+      headers["content-type"].startsWith("application/json")
+    ) {
+      request.write(JSON.stringify(body));
+    } else {
+      request.write(body);
+    }
+
     request.end();
 
     const response = (await responsePromise) as http.IncomingMessage;
