@@ -120,9 +120,9 @@ export class Recorder {
 
     if (!this.mode) {
       const {
-        CI,
+        NODE_ENV,
         // Default to REPLAY in CI, RECORD otherwise
-        RECORDER_MODE = CI ? Mode.REPLAY : Mode.RECORD
+        RECORDER_MODE = NODE_ENV === "test" ? Mode.REPLAY : Mode.RECORD
       } = process.env;
 
       this.configure({ mode: RECORDER_MODE as Mode });
@@ -167,6 +167,15 @@ export class Recorder {
   getFixture = (interceptedRequest: InterceptedRequest): Fixture => {
     const { request } = this.normalize(interceptedRequest) as Fixture;
     const fixturePath = this.getFixturePath(request);
+
+    if (!fs.existsSync(fixturePath)) {
+      const relativePath = fixturePath.replace(process.cwd(), ".");
+
+      log(`Missing fixture %O for %O`, relativePath, request);
+
+      throw new Error(`Fixture does not exist: ${relativePath}`);
+    }
+
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
     return fixture;
