@@ -25,10 +25,18 @@ interface Config {
   normalizers?: Normalizer[];
 }
 
+interface Identifier {
+  (request: NormalizedRequest, response?: ResponseFixture):
+    | undefined
+    | string
+    | [string, string];
+}
+
 interface NormalizedRequest extends RequestFixture {
   url: URL;
 }
 
+// TODO Use { request, response, url } to avoid mudying the request
 interface Normalizer {
   (request: NormalizedRequest, response?: ResponseFixture): void;
 }
@@ -88,6 +96,8 @@ export class Recorder {
   ClientRequest = http.ClientRequest;
   fixturesPath = path.resolve(process.cwd(), "__fixtures__");
   mode?: Mode;
+  identifier?: Identifier;
+  identities = new Map();
   normalizers: Normalizer[] = [];
 
   constructor() {
@@ -163,7 +173,8 @@ export class Recorder {
 
   getFixturePath(request: RequestFixture): string {
     const { href } = request;
-    const { hostname, pathname } = new URL(request.href, true);
+    const url = new URL(href, true);
+    const { hostname, pathname } = url;
 
     if (!hostname) {
       throw new Error(
@@ -178,12 +189,14 @@ export class Recorder {
     }
 
     const hash = fnv1a(JSON.stringify(request));
+    const identity = this.identify(request);
+    const filename = identity ? `${hash}-${identity}` : hash;
 
     const fixturePath = path.join(
       this.fixturesPath,
       hostname,
       pathname,
-      `${hash}.json`
+      `${filename}.json`
     );
 
     return fixturePath;
@@ -248,10 +261,63 @@ export class Recorder {
     fixture: Fixture
   ) => {
     const { respond } = interceptedRequest;
-    const { body, headers, statusCode } = fixture.response;
+    const { request, response } = fixture;
+    const { body, headers, statusCode } = response;
+
+    this.identify(request, response);
 
     respond(null, [statusCode, body, headers]);
   };
+
+  identify(request: RequestFixture, response?: ResponseFixture) {
+    if (!this.identifier) {
+      return;
+    }
+
+    const { href } = request;
+    const url = new URL(href, true);
+
+    const result = this.identifier(
+      {
+        ...request,
+        url
+      },
+      response
+    );
+
+    if (!result) {
+      return;
+    }
+
+    log(`Custom identifier returned %O for %O`, result, { request, response });
+
+    if (Array.isArray(result)) {
+      const [identity, token] = result;
+
+      if (!token) {
+        throw new Error(`Custom identifier returned ${JSON.stringify(result)}`);
+      }
+
+      this.identities.set(token, identity);
+
+      return identity;
+    }
+
+    if (typeof result === "string") {
+      const identity = this.identities.get(result);
+
+      if (!identity) {
+        log("No identities associated with %O", result);
+        return;
+      }
+
+      return identity;
+    }
+
+    throw new Error(
+      'identifier() should return ["identity", "token"] or "token"'
+    );
+  }
 
   ignore() {
     this.configure({ mode: Mode.IGNORE });
