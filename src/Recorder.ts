@@ -94,6 +94,8 @@ nock.restore();
 
 export class Recorder {
   ClientRequest = http.ClientRequest;
+
+  // TODO Move this to `config`
   fixturesPath = path.resolve(process.cwd(), "__fixtures__");
   mode?: Mode;
   identifier?: Identifier;
