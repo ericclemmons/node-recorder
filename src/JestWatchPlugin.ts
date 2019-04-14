@@ -1,5 +1,7 @@
 import { Mode, recorder } from "./index";
 
+const chalk = require("chalk");
+
 module.exports = class JestWatchPLugin {
   changeMode() {
     switch (recorder.mode) {
@@ -17,7 +19,9 @@ module.exports = class JestWatchPLugin {
   getUsageInfo() {
     return {
       key: "r",
-      prompt: `change recording mode from "${recorder.mode}"`
+      prompt: `change recording mode from "${chalk.keyword("yellow")(
+        recorder.getModeEnum()
+      )}"`
     };
   }
 

@@ -125,11 +125,13 @@ export class Recorder {
     Object.assign(this, config);
 
     if ("mode" in config) {
-      const key = Object.keys(Mode).find(
-        (key) => Mode[key as keyof typeof Mode] === this.mode
-      );
+      const modeEnum = this.getModeEnum();
 
-      const message = `${chalk.underline("back-to-the-fixture")}\n${key}`;
+      const message = [
+        chalk.keyword("orange").underline("back-to-the-fixture"),
+        ": ",
+        chalk.keyword("yellow").inverse(` ${modeEnum} `)
+      ].join("");
 
       console.log(
         boxen(message, {
@@ -203,6 +205,12 @@ export class Recorder {
     }
 
     return url.href;
+  }
+
+  getModeEnum() {
+    return Object.keys(Mode).find(
+      (key) => Mode[key as keyof typeof Mode] === this.mode
+    );
   }
 
   handleRequest = (interceptedRequest: InterceptedRequest) => {
