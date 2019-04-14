@@ -2,6 +2,7 @@ import * as boxen from "boxen";
 import * as cosmiconfig from "cosmiconfig";
 import * as fs from "fs";
 import * as http from "http";
+import * as https from "https";
 import * as mkdirp from "mkdirp";
 import * as nock from "nock";
 import * as path from "path";
@@ -94,6 +95,8 @@ nock.restore();
 
 export class Recorder {
   ClientRequest = http.ClientRequest;
+  httpRequest = http.request;
+  httpsRequest = https.request;
 
   // TODO Move this to `config`
   fixturesPath = path.resolve(process.cwd(), "__fixtures__");
@@ -364,7 +367,9 @@ export class Recorder {
   ): Promise<ResponseFixture> {
     const { body, headers, method, options } = interceptedRequest;
 
-    const request = new this.ClientRequest({
+    const request = (options.proto === "https"
+      ? this.httpsRequest
+      : this.httpRequest)({
       ...options,
       method,
       headers
