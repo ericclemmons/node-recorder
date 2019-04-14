@@ -1,4 +1,5 @@
 {
+  "exclude": ["**/*.test.*"],
   "compilerOptions": {
     "incremental": true,
     /* Basic Options */
