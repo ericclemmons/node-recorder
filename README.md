@@ -7,7 +7,7 @@
 Given a GraphQL server:
 
 ```js
-import { Recorder } from "back-to-the-fixture";
+import { recorder } from "back-to-the-fixture";
 import graphql from "express-graphql";
 
 export default graphql((req: Request, res: Response) => {
@@ -15,7 +15,7 @@ export default graphql((req: Request, res: Response) => {
   const { mode } = req.query;
 
   // 👇 Create a recorder for this request
-  new Recorder({ mode });
+  recorder.configure({ mode });
 
   return {
     graphiql: true,

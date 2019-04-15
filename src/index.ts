@@ -1,2 +1,4 @@
+import { Recorder } from "./Recorder";
+
 export { Mode } from "./Mode";
-export { Recorder } from "./Recorder";
+export const recorder = new Recorder();

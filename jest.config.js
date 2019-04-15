@@ -1,7 +1,17 @@
-module.exports = {
-  moduleNameMapper: {
-    "back-to-the-fixture": "<rootDir>/src"
+require("ts-node/register");
+
+const { merge } = require("lodash");
+
+module.exports = merge(
+  {
+    moduleNameMapper: {
+      // ! Don't use this, because Jest messes up polydev's require(...)
+      // "back-to-the-fixture": "<rootDir>/dist"
+    },
+    testEnvironment: "node"
   },
-  preset: "ts-jest",
-  testEnvironment: "node"
-};
+  require("ts-jest/jest-preset"),
+
+  // @ts-ignore
+  require("./src/jest-preset")
+);
