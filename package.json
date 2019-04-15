@@ -41,9 +41,9 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "dev": "cd example && polydev -r ts-node/register -r tsconfig-paths/register",
-    "prerelease": "$_ build",
+    "prerelease": "yarn build",
     "release": "np",
-    "pretest": "$_ build",
+    "pretest": "yarn build",
     "test": "jest"
   },
   "dependencies": {
