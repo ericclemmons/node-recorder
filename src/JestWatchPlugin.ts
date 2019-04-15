@@ -4,7 +4,7 @@ const chalk = require("chalk");
 
 module.exports = class JestWatchPLugin {
   changeMode() {
-    switch (recorder.mode) {
+    switch (recorder.getMode()) {
       case Mode.RECORD:
         return recorder.rerecord();
       case Mode.RERECORD:
@@ -30,8 +30,6 @@ module.exports = class JestWatchPLugin {
   async run() {
     this.changeMode();
 
-    const { mode } = recorder;
-
-    process.env.RECORDER_MODE = mode;
+    process.env.RECORDER_MODE = recorder.getMode();
   }
 };

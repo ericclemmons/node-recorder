@@ -1,5 +1,14 @@
 module.exports = {
-  identifier(request, response) {
+  ignore(request) {
+    // Ignore all internal calls
+    if (request.href.startsWith("http://127.0.0.1/")) {
+      return true;
+    }
+
+    return false;
+  },
+
+  identify(request, response) {
     const { authorization } = request.headers;
     const { pathname, query } = request.url;
     const { access_token, username } = query;

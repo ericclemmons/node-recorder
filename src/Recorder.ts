@@ -22,11 +22,17 @@ const REQUEST_ARGUMENTS = new WeakMap();
 
 interface Config {
   mode?: Mode;
+  ignore?: Ignore;
+  identify?: Identify;
   fixturesPath?: string;
-  normalizers?: Normalizer[];
+  normalizer?: Normalizer;
 }
 
-interface Identifier {
+interface Ignore {
+  (request: NormalizedRequest): boolean;
+}
+
+interface Identify {
   (request: NormalizedRequest, response?: ResponseFixture):
     | undefined
     | string
@@ -90,20 +96,25 @@ const explorer = cosmiconfig("recorder", {
   searchPlaces: ["recorder.config.js"]
 });
 
+const {
+  NODE_ENV,
+  // Default to REPLAY in CI, RECORD otherwise
+  RECORDER_MODE = NODE_ENV === "test" ? Mode.REPLAY : Mode.RECORD
+} = process.env;
+
 // ! nock overrides http methods upon require. Restore to normal before starting.
 nock.restore();
 
 export class Recorder {
-  ClientRequest = http.ClientRequest;
-  httpRequest = http.request;
-  httpsRequest = https.request;
+  private ClientRequest = http.ClientRequest;
+  private httpRequest = http.request;
+  private httpsRequest = https.request;
+  private identities = new Map();
 
-  // TODO Move this to `config`
-  fixturesPath = path.resolve(process.cwd(), "__fixtures__");
-  mode?: Mode;
-  identifier?: Identifier;
-  identities = new Map();
-  normalizers: Normalizer[] = [];
+  private config: Config = {
+    mode: RECORDER_MODE as Mode,
+    fixturesPath: path.resolve(process.cwd(), "__fixtures__")
+  };
 
   constructor() {
     // @ts-ignore
@@ -121,16 +132,6 @@ export class Recorder {
       this.configure(result.config as Config);
     }
 
-    if (!this.mode) {
-      const {
-        NODE_ENV,
-        // Default to REPLAY in CI, RECORD otherwise
-        RECORDER_MODE = NODE_ENV === "test" ? Mode.REPLAY : Mode.RECORD
-      } = process.env;
-
-      this.configure({ mode: RECORDER_MODE as Mode });
-    }
-
     if (process.env.RECORDER_ACTIVE) {
       log("back-to-the-fixture already active");
     }
@@ -142,9 +143,9 @@ export class Recorder {
   }
 
   configure = (config: Config) => {
-    const changedMode = "mode" in config && config.mode !== this.mode;
+    const changedMode = "mode" in config && this.getMode() !== config.mode;
 
-    Object.assign(this, config);
+    Object.assign(this.config, config);
 
     if (changedMode) {
       const modeEnum = this.getModeEnum();
@@ -208,7 +209,7 @@ export class Recorder {
     const filename = identity ? `${hash}-${identity}` : hash;
 
     const fixturePath = path.join(
-      this.fixturesPath,
+      this.config.fixturesPath as string,
       hostname,
       pathname,
       `${filename}.json`
@@ -244,15 +245,29 @@ export class Recorder {
     return url.href;
   }
 
+  getMode() {
+    return this.config.mode;
+  }
+
   getModeEnum() {
     return Object.keys(Mode).find(
-      (key) => Mode[key as keyof typeof Mode] === this.mode
+      (key) => Mode[key as keyof typeof Mode] === this.getMode()
     );
   }
 
   handleRequest = (interceptedRequest: InterceptedRequest) => {
-    const { mode } = this;
+    let mode = this.getMode();
     const { method, options } = interceptedRequest;
+
+    if (this.config.ignore) {
+      const { request } = this.normalize(interceptedRequest);
+      const url = new URL(request.href, true);
+
+      if (this.config.ignore({ ...request, url })) {
+        mode = Mode.IGNORE;
+      }
+    }
+
     const href = this.getHrefFromOptions(options);
 
     switch (mode) {
@@ -302,14 +317,16 @@ export class Recorder {
   }
 
   identify(request: RequestFixture, response?: ResponseFixture) {
-    if (!this.identifier) {
+    const { identify } = this.config;
+
+    if (!identify) {
       return;
     }
 
     const { href } = request;
     const url = new URL(href, true);
 
-    const result = this.identifier(
+    const result = identify(
       {
         ...request,
         url
@@ -477,9 +494,11 @@ export class Recorder {
       response
     };
 
-    this.normalizers.forEach((normalizer) => {
+    const { normalizer } = this.config;
+
+    if (normalizer) {
       normalizer(fixture.request, fixture.response);
-    });
+    }
 
     // Update href to match url object
     fixture.request.href = fixture.request.url.toString();
