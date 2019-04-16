@@ -1,4 +1,6 @@
-![node-recorder logo](./logo.gif)
+<p align="center">
+  <img alt="node-recorder logo" src="./logo.gif" width="50%">
+</p>
 
 - Spend less time writing mocks & fixtures.
 - Automatically record new HTTP(s) requests.
