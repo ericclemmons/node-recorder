@@ -1,5 +1,5 @@
 export enum Mode {
-  IGNORE = "ignore",
+  BYPASS = "bypass",
   RECORD = "record",
   REPLAY = "replay",
   RERECORD = "rerecord"

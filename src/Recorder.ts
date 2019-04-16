@@ -99,7 +99,7 @@ const explorer = cosmiconfig("recorder", {
 const {
   NODE_ENV,
   // Default to REPLAY in CI, RECORD otherwise
-  RECORDER_MODE = NODE_ENV === "test" ? Mode.REPLAY : Mode.RECORD
+  RECORDER = NODE_ENV === "test" ? Mode.REPLAY : Mode.RECORD
 } = process.env;
 
 // ! nock overrides http methods upon require. Restore to normal before starting.
@@ -112,7 +112,7 @@ export class Recorder {
   private identities = new Map();
 
   private config: Config = {
-    mode: RECORDER_MODE as Mode,
+    mode: RECORDER as Mode,
     fixturesPath: path.resolve(process.cwd(), "__fixtures__")
   };
 
@@ -142,6 +142,19 @@ export class Recorder {
     this.patchNock();
 
     process.env.RECORDER_ACTIVE = "true";
+  }
+
+  bypass() {
+    this.configure({ mode: Mode.BYPASS });
+  }
+
+  async bypassRequest(interceptedRequest: InterceptedRequest) {
+    const { respond } = interceptedRequest;
+    const { body, headers, statusCode } = await this.makeRequest(
+      interceptedRequest
+    );
+
+    respond(null, [statusCode, body, headers]);
   }
 
   configure = (config: Config) => {
@@ -266,16 +279,16 @@ export class Recorder {
       const url = new URL(request.href, true);
 
       if (this.config.ignore({ ...request, url })) {
-        mode = Mode.IGNORE;
+        mode = Mode.BYPASS;
       }
     }
 
     const href = this.getHrefFromOptions(options);
 
     switch (mode) {
-      case Mode.IGNORE:
-        log(`Ignoring ${method} ${href}`);
-        return this.ignoreRequest(interceptedRequest);
+      case Mode.BYPASS:
+        log(`Bypass ${method} ${href}`);
+        return this.bypassRequest(interceptedRequest);
 
       case Mode.RECORD:
         if (this.hasFixture(interceptedRequest)) {
@@ -366,19 +379,6 @@ export class Recorder {
     throw new Error(
       'identifier() should return ["identity", "token"] or "token"'
     );
-  }
-
-  ignore() {
-    this.configure({ mode: Mode.IGNORE });
-  }
-
-  async ignoreRequest(interceptedRequest: InterceptedRequest) {
-    const { respond } = interceptedRequest;
-    const { body, headers, statusCode } = await this.makeRequest(
-      interceptedRequest
-    );
-
-    respond(null, [statusCode, body, headers]);
   }
 
   async makeRequest(
