@@ -27,7 +27,7 @@ describe("/logout", () => {
       .get("/logout")
       .expect(
         "set-cookie",
-        "back-to-the-fixture-example=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        "node-recorder-example=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
       )
       .expect(302, "Found. Redirecting to /");
   });

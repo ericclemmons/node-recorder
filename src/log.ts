@@ -1,3 +1,3 @@
 import debug from "debug";
 
-export const log = debug("back-to-the-fixture");
+export const log = debug("node-recorder");

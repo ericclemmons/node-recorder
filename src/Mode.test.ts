@@ -1,4 +1,4 @@
-import { Mode } from "back-to-the-fixture";
+import { Mode } from "node-recorder";
 
 describe("Mode", () => {
   it("should export available modes", () => {

@@ -120,7 +120,7 @@ export class Recorder {
     // @ts-ignore
     if (this.ClientRequest[IS_STUBBED]) {
       log(
-        "back-to-the-fixture has already stubbed nock, so there are multiple versions running!"
+        "Network requests are already intercepted, so there are multiple versions running!"
       );
 
       return;
@@ -133,7 +133,9 @@ export class Recorder {
     }
 
     if (process.env.RECORDER_ACTIVE) {
-      log("back-to-the-fixture already active");
+      log(
+        "Already active, so there are multiple versions sharing this process."
+      );
     }
 
     this.setupNock();
@@ -151,7 +153,7 @@ export class Recorder {
       const modeEnum = this.getModeEnum();
 
       const message = [
-        chalk.keyword("orange").underline("back-to-the-fixture"),
+        chalk.keyword("orange").underline("node-recorder"),
         ": ",
         chalk.keyword("yellow").inverse(` ${modeEnum} `)
       ].join("");
