@@ -2,7 +2,7 @@ import { Mode, recorder } from "./index";
 
 const chalk = require("chalk");
 
-module.exports = class JestWatchPLugin {
+module.exports = class JestWatchPlugin {
   changeMode() {
     switch (recorder.getMode()) {
       case Mode.REPLAY:
