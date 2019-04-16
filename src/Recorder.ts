@@ -112,7 +112,6 @@ export class Recorder {
   private identities = new Map();
 
   private config: Config = {
-    mode: RECORDER as Mode,
     fixturesPath: path.resolve(process.cwd(), "__fixtures__")
   };
 
@@ -130,6 +129,10 @@ export class Recorder {
 
     if (result && result.config) {
       this.configure(result.config as Config);
+    }
+
+    if (!this.getMode()) {
+      this.configure({ mode: RECORDER as Mode });
     }
 
     if (process.env.RECORDER_ACTIVE) {
