@@ -1,6 +1,6 @@
 {
   "name": "node-recorder",
-  "version": "2.0.0-2",
+  "version": "2.0.0-3",
   "repository": "git@github.com:ericclemmons/node-recorder.git",
   "author": "Eric Clemmons <eric@smarterspam.com>",
   "license": "MIT",
