@@ -1,4 +1,4 @@
-import { Mode } from "node-recorder";
+import { Mode } from "./index";
 
 describe("Mode", () => {
   it("should export available modes", () => {
