@@ -27,6 +27,7 @@
     "polydev": "^1.7.1",
     "prettier": "^1.17.0",
     "reflect-metadata": "^0.1.13",
+    "rimraf": "^2.6.3",
     "supertest": "^4.0.2",
     "ts-jest": "^24.0.2",
     "ts-node": "^8.0.2",
@@ -35,6 +36,7 @@
     "typescript": "^3.4.3"
   },
   "scripts": {
+    "prebuild": "rimraf dist",
     "build": "tsc --build tsconfig.build.json",
     "dev": "cd example && polydev -r ts-node/register -r tsconfig-paths/register",
     "prerelease": "yarn build",
