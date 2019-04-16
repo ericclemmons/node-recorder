@@ -4,10 +4,6 @@
   "repository": "git@github.com:ericclemmons/node-recorder.git",
   "author": "Eric Clemmons <eric@smarterspam.com>",
   "license": "MIT",
-  "files": [
-    "dist"
-  ],
-  "main": "./dist",
   "devDependencies": {
     "@types/cosmiconfig": "^5.0.3",
     "@types/debug": "^4.1.4",
@@ -42,7 +38,7 @@
     "build": "tsc --build tsconfig.build.json",
     "dev": "cd example && polydev -r ts-node/register -r tsconfig-paths/register",
     "prerelease": "yarn build",
-    "release": "np",
+    "release": "np --contents dist",
     "pretest": "yarn build",
     "test": "jest"
   },
