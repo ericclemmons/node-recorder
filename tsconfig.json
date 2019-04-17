@@ -3,7 +3,7 @@
   "compilerOptions": {
     "incremental": true,
     /* Basic Options */
-    "target": "es5",
+    "target": "es2017",
     /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', or 'ESNEXT'. */
     "module": "commonjs",
     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
@@ -45,7 +45,7 @@
     "baseUrl": "./",
     /* Base directory to resolve non-absolute module names. */
     "paths": {
-      "back-to-the-fixture": ["src"]
+      "node-recorder": ["src"]
     },
     /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */

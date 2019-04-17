@@ -4,7 +4,7 @@ import * as session from "express-session";
 export default express()
   .use(
     session({
-      name: "back-to-the-fixture-example",
+      name: "node-recorder-example",
       resave: false,
       saveUninitialized: false,
       secret: "secret"
@@ -13,10 +13,7 @@ export default express()
   .use((req, res, next) => {
     const cookie = req.get("cookie") || "";
 
-    if (
-      !cookie.includes("back-to-the-fixture-example") &&
-      req.path !== "/login"
-    ) {
+    if (!cookie.includes("node-recorder-example") && req.path !== "/login") {
       return res.status(403).send(`<a href="/login">Login</a>`);
     }
 

@@ -1,9 +1,9 @@
-import { Mode } from "back-to-the-fixture";
+import { Mode } from "./index";
 
 describe("Mode", () => {
   it("should export available modes", () => {
     expect(Mode).toEqual({
-      IGNORE: "ignore",
+      BYPASS: "bypass",
       RECORD: "record",
       REPLAY: "replay",
       RERECORD: "rerecord"

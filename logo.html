@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    blink {
+      animation: blinking 1s infinite alternate-reverse ease-in-out;
+    }
+
+    /* http://brenna.github.io/csshexagon/ */
+    .hexagon {
+      position: relative;
+      width: 24px;
+      height: 13.86px;
+      background-color: #659f63;
+      margin: 6.93px 0;
+
+      top: 1px;
+    }
+
+    .hexagon:before,
+    .hexagon:after {
+      content: "";
+      position: absolute;
+      width: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+    }
+
+    .hexagon:before {
+      bottom: 100%;
+      border-bottom: 6.93px solid #659f63;
+    }
+
+    .hexagon:after {
+      top: 100%;
+      width: 0;
+      border-top: 6.93px solid #659f63;
+    }
+
+    .play {
+      display: none;
+    }
+
+    .hexagon {
+      display: none;
+    }
+
+    @keyframes blinking {
+      0% {
+        opacity: 1;
+      }
+
+      49% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="flex h-screen justify-center items-center p-32 bg-grey">
+    <code class="bg-white rounded p-32 text-grey-darkest text-5xl flex justify-center items-center">
+      <blink class="rounded-full h-4 w-4 bg-red mr-2"></blink>
+      <span class="underline">Re</span>c<span
+        class="play text-white h-6 w-6 bg-grey-darkest rounded-full flex items-center justify-center text-2xl pl-1"
+        style="margin-top: 2px;">
+        <span class="-ml-px">►</span>
+      </span><span class="hexagon"></span><span class="hidden mt-1 text-green">⬡</span><span
+        class="h-6 w-6 -mt-6 mx-px relative" style="top: -1px;">
+        <svg version="1.1" viewBox="0 0 18 20" xmlns="http://www.w3.org/2000/svg">
+          <g fill="none" fill-rule="evenodd">
+            <g fill="#44883E">
+              <path
+                d="m18 14v-8c-7.321e-4 -0.7138-0.38183-1.3731-1-1.73l-7-4c-0.6188-0.35727-1.3812-0.35727-2 0l-7 4c-0.61817 0.3569-0.99927 1.0162-1 1.73v8c7.3215e-4 0.7138 0.38183 1.3731 1 1.73l7 4c0.6188 0.35727 1.3812 0.35727 2 0l7-4c0.61817-0.3569 0.99927-1.0162 1-1.73z" />
+            </g>
+          </g>
+        </svg>
+      </span>rder
+    </code>
+  </main>
+</body>
