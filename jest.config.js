@@ -13,5 +13,5 @@ module.exports = merge(
   require("ts-jest/jest-preset"),
 
   // @ts-ignore
-  require("./src/jest-preset")
+  require("./jest-preset")
 );

@@ -5,7 +5,8 @@
   "author": "Eric Clemmons <eric@smarterspam.com>",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "jest-preset.js"
   ],
   "main": "./dist",
   "devDependencies": {
