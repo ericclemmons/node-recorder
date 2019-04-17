@@ -1,4 +1,3 @@
-import * as boxen from "boxen";
 import * as cosmiconfig from "cosmiconfig";
 import * as fs from "fs";
 import * as http from "http";
@@ -166,22 +165,23 @@ export class Recorder {
     Object.assign(this.config, config);
 
     if (changedMode) {
-      const modeEnum = this.getModeEnum();
-
-      const message = [
-        chalk.keyword("orange").underline("node-recorder"),
-        ": ",
-        chalk.keyword("yellow").inverse(` ${modeEnum} `)
-      ].join("");
+      const modeEnum = this.getModeEnum() as string;
 
       console.log(
-        boxen(message, {
-          align: "center",
-          borderStyle: boxen.BorderStyle.Round,
-          dimBorder: true,
-          margin: 1,
-          padding: 1
-        })
+        [
+          "\n",
+          chalk.bgWhite("".padStart(23)),
+          chalk.bgWhite.hex("#3d4852")(
+            `  ${chalk.red("•")} R e c ${chalk.hex("#44883E")("⬢ ")} r d e r   `
+          ),
+          chalk.bgWhite("".padStart(23)),
+          chalk
+            .keyword("orange")
+            .bold.inverse(
+              modeEnum.padStart((23 + modeEnum.length) / 2).padEnd(23)
+            ),
+          "\n"
+        ].join("\n")
       );
     }
   };
