@@ -27,7 +27,7 @@ module.exports = class JestWatchPlugin {
 
   // ! There seems to be a bug/race-condition where I cannot `await`
   // ! and _then_ set process.env.RECORDER
-  run() {
+  async run() {
     this.changeMode();
 
     process.env.RECORDER = recorder.getMode();
