@@ -112,6 +112,7 @@ export class Recorder {
   private identities = new Map();
 
   private config: Config = {
+    mode: RECORDER as Mode,
     fixturesPath: path.resolve(process.cwd(), "__fixtures__")
   };
 
@@ -132,8 +133,8 @@ export class Recorder {
       this.configure(result.config as Config);
     }
 
-    if (!this.getMode()) {
-      this.configure({ mode: RECORDER as Mode });
+    if (log.enabled) {
+      log(this.getModeBanner());
     }
 
     // ! This only happens when running src/Recorder.ts & dist/Recorder.js
@@ -163,30 +164,7 @@ export class Recorder {
   }
 
   configure = (config: Config) => {
-    const changedMode = "mode" in config && this.getMode() !== config.mode;
-
     Object.assign(this.config, config);
-
-    if (changedMode) {
-      const modeEnum = this.getModeEnum() as string;
-
-      console.log(
-        [
-          "\n",
-          chalk.bgWhite("".padStart(23)),
-          chalk.bgWhite.hex("#3d4852")(
-            `  ${chalk.red("•")} R e c ${chalk.hex("#44883E")("⬢ ")} r d e r   `
-          ),
-          chalk.bgWhite("".padStart(23)),
-          chalk
-            .keyword("orange")
-            .bold.inverse(
-              modeEnum.padStart((23 + modeEnum.length) / 2).padEnd(23)
-            ),
-          "\n"
-        ].join("\n")
-      );
-    }
   };
 
   getFixture = (interceptedRequest: InterceptedRequest): Fixture => {
@@ -270,6 +248,23 @@ export class Recorder {
 
   getMode() {
     return this.config.mode;
+  }
+
+  getModeBanner() {
+    const modeEnum = this.getModeEnum() as string;
+
+    return [
+      "\n",
+      chalk.bgWhite("".padStart(23)),
+      chalk.bgWhite.hex("#3d4852")(
+        `  ${chalk.red("•")} R e c ${chalk.hex("#44883E")("⬢ ")} r d e r   `
+      ),
+      chalk.bgWhite("".padStart(23)),
+      chalk
+        .keyword("orange")
+        .bold.inverse(modeEnum.padStart((23 + modeEnum.length) / 2).padEnd(23)),
+      "\n"
+    ].join("\n");
   }
 
   getModeEnum() {
