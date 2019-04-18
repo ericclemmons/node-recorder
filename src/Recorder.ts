@@ -13,6 +13,7 @@ import { Mode } from "./Mode";
 
 const fnv1a = require("@sindresorhus/fnv1a");
 const chalk = require("chalk");
+const terminalLink = require("terminal-link");
 
 // Cannot use `Symbol` here, since it's referentially different
 // between the dist/ & src/ versions.
@@ -117,9 +118,10 @@ export class Recorder {
   constructor() {
     // @ts-ignore
     if (this.ClientRequest[IS_STUBBED]) {
-      log(
-        "Network requests are already intercepted, so there are multiple versions running!"
-      );
+      // ! No need to log this, now that the fix is in place
+      // log(
+      //   "Network requests are already intercepted, so there are multiple versions running!"
+      // );
 
       return;
     }
@@ -134,11 +136,12 @@ export class Recorder {
       this.configure({ mode: RECORDER as Mode });
     }
 
-    if (process.env.RECORDER_ACTIVE) {
-      log(
-        "Already active, so there are multiple versions sharing this process."
-      );
-    }
+    // ! This only happens when running src/Recorder.ts & dist/Recorder.js
+    // if (process.env.RECORDER_ACTIVE) {
+    //   log(
+    //     "Already active, so there are multiple versions sharing this process."
+    //   );
+    // }
 
     this.setupNock();
     this.patchNock();
@@ -191,19 +194,21 @@ export class Recorder {
     const fixturePath = this.getFixturePath(request);
 
     if (!fs.existsSync(fixturePath)) {
-      const relativePath = fixturePath.replace(process.cwd(), ".");
-
-      throw new Error(
-        `Expected fixture for ${request.method} ${
-          request.href
-        } at ${relativePath}`
-      );
+      throw new Error(`Missing fixture ${this.getFixtureLink(fixturePath)}`);
     }
 
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
     return fixture;
   };
+
+  getFixtureLink(fixturePath: string): string {
+    const relativePath = fixturePath.replace(process.cwd(), "").slice(1);
+
+    return terminalLink(relativePath, `vscode://file/${fixturePath}`, {
+      fallback: (text: string) => text
+    });
+  }
 
   getFixturePath(request: RequestFixture): string {
     const { href } = request;
@@ -276,17 +281,21 @@ export class Recorder {
   handleRequest = (interceptedRequest: InterceptedRequest) => {
     let mode = this.getMode();
     const { method, options } = interceptedRequest;
+    const fixturePath = this.hasFixture(interceptedRequest);
+    const href = this.getHrefFromOptions(options);
+    const link = terminalLink(href, href, {
+      fallback: (text: string) => text
+    });
 
     if (this.config.ignore) {
       const { request } = this.normalize(interceptedRequest);
       const url = new URL(request.href, true);
 
       if (this.config.ignore({ ...request, url })) {
-        mode = Mode.BYPASS;
+        log(`Ignoring ${link}`);
+        return this.bypassRequest(interceptedRequest);
       }
     }
-
-    const href = this.getHrefFromOptions(options);
 
     switch (mode) {
       case Mode.BYPASS:
@@ -294,20 +303,25 @@ export class Recorder {
         return this.bypassRequest(interceptedRequest);
 
       case Mode.RECORD:
-        if (this.hasFixture(interceptedRequest)) {
-          log(`Replaying ${method} ${href}`);
+        if (fixturePath) {
+          log(`Replaying ${this.getFixtureLink(fixturePath)}`);
           return this.replayRequest(interceptedRequest);
         }
 
-        log(`Recording ${method} ${href}`);
+        log(`Recording ${link}`);
         return this.recordRequest(interceptedRequest);
 
       case Mode.RERECORD:
-        log(`Recording ${method} ${href}`);
+        log(`Recording ${link}`);
         return this.recordRequest(interceptedRequest);
 
       case Mode.REPLAY:
-        log(`Replaying ${method} ${href}`);
+        if (fixturePath) {
+          log(`Replaying ${this.getFixtureLink(fixturePath)}`);
+        } else {
+          log(`Replaying ${link}`);
+        }
+
         return this.replayRequest(interceptedRequest);
 
       default:
@@ -328,10 +342,11 @@ export class Recorder {
     respond(null, [statusCode, body, headers]);
   };
 
-  hasFixture(interceptedRequest: InterceptedRequest) {
+  hasFixture(interceptedRequest: InterceptedRequest): string | false {
     const { request } = this.normalize(interceptedRequest) as Fixture;
+    const fixturePath = this.getFixturePath(request);
 
-    return fs.existsSync(this.getFixturePath(request));
+    return fs.existsSync(fixturePath) ? fixturePath : false;
   }
 
   identify(request: RequestFixture, response?: ResponseFixture) {
