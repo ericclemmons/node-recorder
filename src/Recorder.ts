@@ -486,13 +486,13 @@ export class Recorder {
     response?: ResponseRecording
   ) {
     // Poor-man's clone for immutability
-    const request = JSON.parse(JSON.stringify(interceptedRequest));
-    const { body, headers, method, options } = request;
+    const headers = JSON.parse(JSON.stringify(interceptedRequest.headers));
+    const { body, method, options } = interceptedRequest;
     const href = this.getHrefFromOptions(options);
     const url = new URL(href, true);
 
     // fThis is redundant with `href`, so why should we keep it?
-    delete request.headers.host;
+    delete headers.host;
 
     // Remove ephemeral ports from superagent testing
     // ! user-agent can be "..." or ["..."]
