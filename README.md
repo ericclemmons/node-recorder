@@ -31,6 +31,14 @@
 * Alias cookies & Oauth tokens to users, to avoid ambiguity.
 * Ignore requests you don't want to record.
 
+---
+
+<p align="center">
+  <img alt="node-recorder demo" src="./demo.gif">
+</p>
+
+---
+
 ## Installation
 
 ```shell
