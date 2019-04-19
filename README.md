@@ -2,34 +2,14 @@
   <img alt="node-recorder logo" src="./logo.gif" width="50%">
 </p>
 
-- Spend less time writing mocks & fixtures.
 - Automatically record new HTTP(s) requests.
 - Replay fixtures when testing.
+- Customize responses.
 - Works well with [supertest](https://github.com/visionmedia/supertest).
-- Predictable, deterministic filepaths that match the URL:
-
-  1. Call https://api.github.com/rate_limit.
-  1. `./__fixtures__/api.github.com/rate_limit/${hash}.json`
-
-     ```json
-     {
-       "request": {
-         "method": "GET",
-         "href": "https://api.github.com/rate_limit",
-         "headers": {...},
-         "body": ""
-       },
-       "response": {
-         "statusCode": 200,
-         "headers": {...},
-         "body": {...}
-       }
-     }
-     ```
-
-* Normalize the `request` & `response`.
-* Alias cookies & Oauth tokens to users, to avoid ambiguity.
-* Ignore requests you don't want to record.
+- Predictable, deterministic filepaths.
+- Normalize the `request` & `response`.
+- Associate session-based cookies & OAuth tokens to users.
+- Ignore requests you don't want to record.
 
 ---
 
