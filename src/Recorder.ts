@@ -414,10 +414,7 @@ export class Recorder {
     });
 
     // Because we JSON.parse responses, we need to stringify it
-    if (
-      headers["content-type"] &&
-      headers["content-type"].startsWith("application/json")
-    ) {
+    if (String(headers["content-type"]).includes("application/json")) {
       request.write(JSON.stringify(body));
     } else {
       request.write(body);
@@ -461,10 +458,7 @@ export class Recorder {
         const body = Buffer.concat(chunks).toString("utf8");
 
         // Simple services oftent send "application/json; charset=utf-8"
-        if (
-          headers["content-type"] &&
-          headers["content-type"].startsWith("application/json")
-        ) {
+        if (String(headers["content-type"]).includes("application/json")) {
           try {
             return resolve(JSON.parse(body));
           } catch (error) {
