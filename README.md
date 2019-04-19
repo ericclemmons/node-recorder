@@ -3,7 +3,7 @@
 </p>
 
 - Automatically record new HTTP(s) requests.
-- Replay fixtures when testing.
+- Replay recordings when testing.
 - Customize responses.
 - Works well with [supertest](https://github.com/visionmedia/supertest).
 - Predictable, deterministic filepaths.
@@ -30,15 +30,15 @@ $ npm install node-recorder --save-dev
 ## Getting Started
 
 - By simply including `node-recorder`, **all HTTP(s) requests are intercepted**.
-- By default, `RECORD` mode records new fixtures, and replays existing fixures.
-- When in `NODE_ENV=test` or `CI=true`, `REPLAY` mode replays existing fixtures, and throws an error when one doesn't exist.
+- By default, `RECORD` mode records new recordings, and replays existing fixures.
+- When in `NODE_ENV=test` or `CI=true`, `REPLAY` mode replays existing recordings, and throws an error when one doesn't exist.
   _(So that local tests don't suddenly fail in CI)_
 
 ### Recorder Modes
 
 - `bypass` - All network requests bypass the recorder and respond as usual.
-- `record` - Record only new network requests (i.e. those without fixtures), while replaying existing fixtures.
-- `replay` - Replay all network requests using fixtures. **If a fixture is missing, an error is thrown**.
+- `record` - Record only new network requests (i.e. those without recordings), while replaying existing recordings.
+- `replay` - Replay all network requests using recordings. **If a recording is missing, an error is thrown**.
 - `rerecord` - Re-record all network requests.
 
 ### Using `node --require`
@@ -102,7 +102,7 @@ module.exports = {
 }
 ```
 
-- `request` is the same as the fixture (e.g. `body`, `headers`, `href`, `method`), but
+- `request` is the same as the recording (e.g. `body`, `headers`, `href`, `method`), but
   with an additional `url` property from https://github.com/unshiftio/url-parse to simplify conditional logic.
 - `response` contains `body`, `headers`, & `statusCode`.
 
@@ -113,9 +113,9 @@ This is useful when network requests are stateful, in that they rely on an autho
 1. Suppose you login by calling `/login?user=foo&password=bar`.
 2. The response contains `{ "token": "abc123" }3. Now, to get data, you call`/api?token=abc123`.
 
-When recording fixtures, the token `abc123` isn't clearly associated with the user `foo`.
+When recording recordings, the token `abc123` isn't clearly associated with the user `foo`.
 
-To address this, you can `identify` the `request` and `response`, so that the fixtures are aliased accordingly:
+To address this, you can `identify` the `request` and `response`, so that the recordings are aliased accordingly:
 
 ```js
 identify(request, response) {
@@ -138,7 +138,7 @@ identify(request, response) {
 }
 ```
 
-Now, when recorded fixtures will look like:
+Now, when recorded recordings will look like:
 
 - `127.0.0.1/login/${hash}.${user}.json`
 - `127.0.0.1/api/${hash}.${user}.json`
@@ -147,7 +147,7 @@ This way, similar-looking network requests (e.g. login & GraphQL) can be differe
 
 #### `ignore` a `request`
 
-Typically, you don't want to record fixtures for things like analytics or reporting.
+Typically, you don't want to record recordings for things like analytics or reporting.
 
 ```js
 // recorder.conig.js
@@ -164,11 +164,11 @@ module.exports = {
 
 #### `normalize` a `request` or `response`
 
-Fixtures are meant to make development & testing _easier_, so modification is necessary.
+Recordings are meant to make development & testing _easier_, so modification is necessary.
 
-- **Changing `request` changes the filename `hash` of the fixture**. You may need to `record` again.
+- **Changing `request` changes the filename `hash` of the recording**. You may need to `record` again.
 - `normalize` is called **before** the network request and **after**. This means that `response` may be `undefined`!
-- You can **change `response` by hand, or via `normalize` without affecting the filename `hash` of the fixture**.
+- You can **change `response` by hand, or via `normalize` without affecting the filename `hash` of the recording**.
 
 ```js
 module.exports = {

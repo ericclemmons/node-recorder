@@ -24,8 +24,8 @@ interface Config {
   mode?: Mode;
   ignore?: Ignore;
   identify?: Identify;
-  fixturesPath?: string;
   normalizer?: Normalizer;
+  recordingsPath?: string;
 }
 
 interface Ignore {
@@ -33,19 +33,19 @@ interface Ignore {
 }
 
 interface Identify {
-  (request: NormalizedRequest, response?: ResponseFixture):
+  (request: NormalizedRequest, response?: ResponseRecording):
     | undefined
     | string
     | [string, string];
 }
 
-interface NormalizedRequest extends RequestFixture {
+interface NormalizedRequest extends RequestRecording {
   url: URL;
 }
 
 // TODO Use { request, response, url } to avoid mudying the request
 interface Normalizer {
-  (request: NormalizedRequest, response?: ResponseFixture): void;
+  (request: NormalizedRequest, response?: ResponseRecording): void;
 }
 
 enum Methods {
@@ -65,22 +65,22 @@ interface RequestOptions extends http.RequestOptions {
   proto?: string;
 }
 
-interface RequestFixture {
+interface RequestRecording {
   method: Methods;
   href: string;
   headers: http.IncomingHttpHeaders;
   body: string;
 }
 
-interface ResponseFixture {
+interface ResponseRecording {
   statusCode: number;
   headers: http.IncomingHttpHeaders;
   body: object | string;
 }
 
-interface Fixture {
-  request: RequestFixture;
-  response: ResponseFixture;
+interface Recording {
+  request: RequestRecording;
+  response: ResponseRecording;
 }
 
 interface InterceptedRequest {
@@ -113,7 +113,7 @@ export class Recorder {
 
   private config: Config = {
     mode: RECORDER as Mode,
-    fixturesPath: path.resolve(process.cwd(), "__fixtures__")
+    recordingsPath: path.resolve(process.cwd(), "__recordings__")
   };
 
   constructor() {
@@ -167,41 +167,43 @@ export class Recorder {
     Object.assign(this.config, config);
   };
 
-  getFixture = (interceptedRequest: InterceptedRequest): Fixture => {
-    const { request } = this.normalize(interceptedRequest) as Fixture;
-    const fixturePath = this.getFixturePath(request);
+  getRecording = (interceptedRequest: InterceptedRequest): Recording => {
+    const { request } = this.normalize(interceptedRequest) as Recording;
+    const recordingPath = this.getRecordingPath(request);
 
-    if (!fs.existsSync(fixturePath)) {
-      throw new Error(`Missing fixture ${this.getFixtureLink(fixturePath)}`);
+    if (!fs.existsSync(recordingPath)) {
+      throw new Error(
+        `Missing recording ${this.getRecordingLink(recordingPath)}`
+      );
     }
 
-    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+    const recording = JSON.parse(fs.readFileSync(recordingPath, "utf8"));
 
-    return fixture;
+    return recording;
   };
 
-  getFixtureLink(fixturePath: string): string {
-    const relativePath = fixturePath.replace(process.cwd(), "").slice(1);
+  getRecordingLink(recordingPath: string): string {
+    const relativePath = recordingPath.replace(process.cwd(), "").slice(1);
 
-    return terminalLink(relativePath, `vscode://file/${fixturePath}`, {
+    return terminalLink(relativePath, `vscode://file/${recordingPath}`, {
       fallback: (text: string) => text
     });
   }
 
-  getFixturePath(request: RequestFixture): string {
+  getRecordingPath(request: RequestRecording): string {
     const { href } = request;
     const url = new URL(href, true);
     const { hostname, pathname } = url;
 
     if (!hostname) {
       throw new Error(
-        `Cannot parse hostname from fixture's "href": ${JSON.stringify(href)}`
+        `Cannot parse hostname from recording's "href": ${JSON.stringify(href)}`
       );
     }
 
     if (!pathname) {
       throw new Error(
-        `Cannot parse pathname from fixture's "href": ${JSON.stringify(href)}`
+        `Cannot parse pathname from recording's "href": ${JSON.stringify(href)}`
       );
     }
 
@@ -209,14 +211,14 @@ export class Recorder {
     const identity = this.identify(request);
     const filename = identity ? `${hash}-${identity}` : hash;
 
-    const fixturePath = path.join(
-      this.config.fixturesPath as string,
+    const recordingPath = path.join(
+      this.config.recordingsPath as string,
       hostname,
       pathname,
       `${filename}.json`
     );
 
-    return fixturePath;
+    return recordingPath;
   }
 
   getHrefFromOptions(options: RequestOptions) {
@@ -276,7 +278,7 @@ export class Recorder {
   handleRequest = (interceptedRequest: InterceptedRequest) => {
     let mode = this.getMode();
     const { method, options } = interceptedRequest;
-    const fixturePath = this.hasFixture(interceptedRequest);
+    const recordingPath = this.hasRecording(interceptedRequest);
     const href = this.getHrefFromOptions(options);
     const link = terminalLink(href, href, {
       fallback: (text: string) => text
@@ -298,8 +300,8 @@ export class Recorder {
         return this.bypassRequest(interceptedRequest);
 
       case Mode.RECORD:
-        if (fixturePath) {
-          log(`Replaying ${this.getFixtureLink(fixturePath)}`);
+        if (recordingPath) {
+          log(`Replaying ${this.getRecordingLink(recordingPath)}`);
           return this.replayRequest(interceptedRequest);
         }
 
@@ -311,8 +313,8 @@ export class Recorder {
         return this.recordRequest(interceptedRequest);
 
       case Mode.REPLAY:
-        if (fixturePath) {
-          log(`Replaying ${this.getFixtureLink(fixturePath)}`);
+        if (recordingPath) {
+          log(`Replaying ${this.getRecordingLink(recordingPath)}`);
         } else {
           log(`Replaying ${link}`);
         }
@@ -326,10 +328,10 @@ export class Recorder {
 
   handleResponse = (
     interceptedRequest: InterceptedRequest,
-    fixture: Fixture
+    recording: Recording
   ) => {
     const { respond } = interceptedRequest;
-    const { request, response } = fixture;
+    const { request, response } = recording;
     const { body, headers, statusCode } = response;
 
     this.identify(request, response);
@@ -337,14 +339,14 @@ export class Recorder {
     respond(null, [statusCode, body, headers]);
   };
 
-  hasFixture(interceptedRequest: InterceptedRequest): string | false {
-    const { request } = this.normalize(interceptedRequest) as Fixture;
-    const fixturePath = this.getFixturePath(request);
+  hasRecording(interceptedRequest: InterceptedRequest): string | false {
+    const { request } = this.normalize(interceptedRequest) as Recording;
+    const recordingPath = this.getRecordingPath(request);
 
-    return fs.existsSync(fixturePath) ? fixturePath : false;
+    return fs.existsSync(recordingPath) ? recordingPath : false;
   }
 
-  identify(request: RequestFixture, response?: ResponseFixture) {
+  identify(request: RequestRecording, response?: ResponseRecording) {
     const { identify } = this.config;
 
     if (!identify) {
@@ -396,7 +398,7 @@ export class Recorder {
 
   async makeRequest(
     interceptedRequest: InterceptedRequest
-  ): Promise<ResponseFixture> {
+  ): Promise<ResponseRecording> {
     const { body, headers, method, options } = interceptedRequest;
 
     const request = (options.proto === "https"
@@ -481,7 +483,7 @@ export class Recorder {
 
   normalize(
     interceptedRequest: InterceptedRequest,
-    response?: ResponseFixture
+    response?: ResponseRecording
   ) {
     // Poor-man's clone for immutability
     const request = JSON.parse(JSON.stringify(interceptedRequest));
@@ -498,7 +500,7 @@ export class Recorder {
       url.set("port", undefined);
     }
 
-    const fixture = {
+    const recording = {
       request: { method, href, headers, body, url },
       response
     };
@@ -506,16 +508,16 @@ export class Recorder {
     const { normalizer } = this.config;
 
     if (normalizer) {
-      normalizer(fixture.request, fixture.response);
+      normalizer(recording.request, recording.response);
     }
 
     // Update href to match url object
-    fixture.request.href = fixture.request.url.toString();
+    recording.request.href = recording.request.url.toString();
 
     // Don't save parsed url
-    delete fixture.request.url;
+    delete recording.request.url;
 
-    return fixture;
+    return recording;
   }
 
   record() {
@@ -527,14 +529,14 @@ export class Recorder {
     const response = await this.makeRequest(request);
     const { statusCode, body, headers } = response;
 
-    // Respond with *real* response for recording, not fixture.
+    // Respond with *real* response for recording, not recording.
     respond(null, [statusCode, body, headers]);
 
-    const fixture = this.normalize(request, response) as Fixture;
+    const recording = this.normalize(request, response) as Recording;
 
-    this.identify(fixture.request, fixture.response);
+    this.identify(recording.request, recording.response);
 
-    process.nextTick(() => this.saveFixture(fixture));
+    process.nextTick(() => this.saveRecording(recording));
   }
 
   replay() {
@@ -545,11 +547,11 @@ export class Recorder {
     const { req } = interceptedRequest;
 
     try {
-      const fixture = await this.getFixture(interceptedRequest);
+      const recording = await this.getRecording(interceptedRequest);
 
-      this.identify(fixture.request, fixture.response);
+      this.identify(recording.request, recording.response);
 
-      return this.handleResponse(interceptedRequest, fixture);
+      return this.handleResponse(interceptedRequest, recording);
     } catch (error) {
       req.emit("error", error);
     }
@@ -580,12 +582,12 @@ export class Recorder {
     http.ClientRequest[IS_STUBBED] = true;
   }
 
-  saveFixture(fixture: Fixture) {
-    const fixturePath = this.getFixturePath(fixture.request);
-    const serialized = JSON.stringify(fixture, null, 2);
+  saveRecording(recording: Recording) {
+    const recordingPath = this.getRecordingPath(recording.request);
+    const serialized = JSON.stringify(recording, null, 2);
 
-    mkdirp.sync(path.dirname(fixturePath));
-    fs.writeFileSync(fixturePath, serialized);
+    mkdirp.sync(path.dirname(recordingPath));
+    fs.writeFileSync(recordingPath, serialized);
   }
 
   setupNock() {
